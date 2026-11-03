@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>B.Tech Capstone Project Progress Reports - YMCA UST</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 12mm 15mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Times New Roman", Times, serif;
+      color: #111;
+      background-color: #f3f4f6;
+      line-height: 1.35;
+      font-size: 11pt;
+    }
+
+    .no-print-bar {
+      background: #1e3a8a;
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      font-family: Arial, sans-serif;
+    }
+
+    .no-print-bar button {
+      background: #fbbf24;
+      color: #1e293b;
+      border: none;
+      font-weight: bold;
+      padding: 8px 18px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+
+    .no-print-bar button:hover {
+      background: #f59e0b;
+    }
+
+    .page-container {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 20px auto;
+      background: white;
+      padding: 16mm 18mm;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      position: relative;
+    }
+
+    @media print {
+      body {
+        background: transparent;
+      }
+      .no-print-bar {
+        display: none !important;
+      }
+      .page-container {
+        margin: 0;
+        padding: 4mm 2mm;
+        box-shadow: none;
+        width: 100%;
+        min-height: 0;
+        page-break-after: always;
+      }
+      .page-container:last-child {
+        page-break-after: auto;
+      }
+    }
+
+    .header-table {
+      width: 100%;
+      border-bottom: 2px solid #222;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .university-title {
+      font-size: 13.5pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #0b1f3f;
+    }
+
+    .dept-title {
+      font-size: 12pt;
+      font-weight: bold;
+      margin-top: 3px;
+      color: #111;
+    }
+
+    .report-title {
+      font-size: 11.5pt;
+      font-weight: bold;
+      margin-top: 4px;
+      text-decoration: underline;
+    }
+
+    .term-heading {
+      font-size: 11pt;
+      font-weight: bold;
+      margin-top: 3px;
+      color: #222;
+    }
+
+    .meta-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 12px;
+      font-size: 10.5pt;
+    }
+
+    .meta-table td {
+      padding: 3px 4px;
+      vertical-align: top;
+    }
+
+    .meta-label {
+      width: 250px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .meta-dots {
+      border-bottom: 1px dotted #444;
+      font-weight: 500;
+      color: #1e3a8a;
+    }
+
+    .section-title {
+      font-size: 11pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-top: 10px;
+      margin-bottom: 4px;
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-left: 3px solid #1e3a8a;
+    }
+
+    .summary-text {
+      font-size: 10pt;
+      text-align: justify;
+      margin-bottom: 8px;
+      line-height: 1.35;
+    }
+
+    ul.task-list {
+      margin-left: 18px;
+      margin-bottom: 8px;
+      font-size: 9.8pt;
+    }
+
+    ul.task-list li {
+      margin-bottom: 4px;
+      text-align: justify;
+    }
+
+    ul.task-list li strong {
+      color: #0f172a;
+    }
+
+    .sign-section {
+      margin-top: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      font-size: 10.5pt;
+      font-weight: bold;
+    }
+
+    .mentor-box {
+      margin-top: 16px;
+      border: 1px solid #777;
+      padding: 8px 12px;
+      border-radius: 3px;
+      background: #fafafa;
+    }
+
+    .mentor-box-title {
+      font-size: 10.5pt;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .mentor-lines {
+      height: 38px;
+      border-bottom: 1px dotted #888;
+      margin-bottom: 10px;
+    }
+
+    .mentor-sign-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      font-size: 10.5pt;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="no-print-bar">
+    <div>
+      <strong>PrintShop Capstone Project Progress Reports</strong> (YMCA University Format)
+    </div>
+    <button onclick="window.print()">🖨️ Print / Save as PDF</button>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- PAGE 1: 1ST PROGRESS REPORT (OCTOBER 2026)                                -->
+  <!-- ========================================================================= -->
+  <div class="page-container">
+    <div class="header-table">
+      <div class="university-title">J. C. Bose University of Science & Technology, YMCA, Faridabad</div>
+      <div class="dept-title">DEPARTMENT OF COMPUTER SCIENCE & ENGINEERING</div>
+      <div class="report-title">Progress Report for B.Tech. Capstone Project</div>
+      <div class="term-heading">1st Progress Report (Oct. 2026)</div>
+    </div>
+
+    <table class="meta-table">
+      <tr>
+        <td class="meta-label">Name of Student</td>
+        <td>: <span class="meta-dots">&nbsp;[Student Name / Your Name]&nbsp;</span></td>
+      </tr>
+      <tr>
+        <td class="meta-label">Name of Mentor</td>
+        <td>: <span class="meta-dots">&nbsp;[Mentor / Guide Name]&nbsp;</span></td>
+      </tr>
+      <tr>
+        <td class="meta-label">Roll No.</td>
+        <td>: <span class="meta-dots">&nbsp;[University Roll Number]&nbsp;</span></td>
+      </tr>
+      <tr>
+        <td class="meta-label">Name and Roll No of team member</td>
+        <td>: <span class="meta-dots">&nbsp;[Team Member Name & Roll No. / Individual Project]&nbsp;</span></td>
+      </tr>
+      <tr>
+        <td class="meta-label">Title of Project</td>
+        <td>: <span class="meta-dots" style="font-weight: bold;">Automated Web-Based Print Shop Management and Direct Spooling System</span></td>
+      </tr>
+    </table>
+
+    <div class="section-title">Progress Summary</div>
+    <p class="summary-text">
+      The primary focus during Phase 1 (up to October 2026) was problem formulation, Software Requirements Specification (SRS), architectural design, relational schema modeling, and foundational prototype development. The project addresses systemic delays and privacy issues in traditional campus photocopy shops resulting from manual USB pen-drive handling and unorganized messaging app file transfers. A 3-tier decoupled architecture was formulated comprising a modern React/Vite customer interface, an asynchronous FastAPI REST API backend, and an SQLAlchemy ORM database. A secure document ingestion service supporting uploads up to 50MB was built alongside client-side PDF rendering via PDF.js. In addition, an automated dynamic tiered pricing engine was developed to handle page-range parsing, duplex calculation, and B/W vs. color printing modes.
+    </p>
+
+    <div class="section-title">Tasks Completed</div>
+    <ul class="task-list">
+      <li><strong>Requirement Engineering & Feasibility Analysis:</strong> Conducted campus workflow survey; compiled SRS defining functional requirements (contactless upload, live pricing, order tracking) and security constraints (document privacy).</li>
+      <li><strong>System Architecture & High-Level Design:</strong> Designed service-oriented decoupled architecture connecting React customer portal, FastAPI REST layer, SQLite/PostgreSQL relational database, and background print queue.</li>
+      <li><strong>Relational Database Modeling:</strong> Engineered database models in <code>models.py</code> including <code>Shop</code> (multi-tenancy, rates, status), <code>Order</code> (customer metadata, pickup code, payment status), and <code>OrderItem</code> (multi-file tracking).</li>
+      <li><strong>Secure File Ingestion Service:</strong> Developed <code>file_service.py</code> to handle multipart streaming uploads, MIME-type verification, 50MB upload limits, and cryptographic filename hashing to prevent path traversal attacks.</li>
+      <li><strong>Dynamic Tiered Pricing Engine:</strong> Implemented mathematical pricing logic (<code>pricing.py</code>) incorporating volume tiers (1–10, 11–20, 21+ pages), custom page-range parsing (e.g. <code>"1-5, 8, 12-14"</code>), and duplex configurations.</li>
+      <li><strong>Frontend PDF Preview Portal:</strong> Built interactive web interface using React and <code>pdfjs-dist</code> for instant client-side thumbnail generation, orientation detection, and total page validation.</li>
+    </ul>
+
+    <div class="section-title">Tasks in Progress</div>
+    <ul class="task-list">
+      <li><strong>Asynchronous Print Queue Worker:</strong> Developing background worker thread (<code>print_queue.py</code>) implementing FCFS job scheduling and state management (<code>QUEUED &rarr; PRINTING &rarr; PRINTED</code>).</li>
+      <li><strong>Hardware Spooling Integration:</strong> Researching silent command-line printing via SumatraPDF and PyMuPDF document composition on Windows printers.</li>
+      <li><strong>Shopkeeper Administration Portal:</strong> Designing dashboard for shopkeepers to manage store status, custom pricing, and hardware printer mappings.</li>
+      <li><strong>Payment Gateway Integration:</strong> Implementing Razorpay test API endpoints and order validation workflows.</li>
+    </ul>
+
+    <div class="sign-section">
+      <div>Date: 20/10/2026</div>
+      <div>(Signature of Student)</div>
+    </div>
+
+    <div class="mentor-box">
+      <div class="mentor-box-title">Report of the Mentor <span style="font-size: 9.5pt; font-weight: normal;">(to be filled by mentor)</span></div>
+      <div class="mentor-lines"></div>
+      <div class="mentor-sign-row">
+        <div>Assessment: [ &nbsp; ] Satisfactory &nbsp;&nbsp; [ &nbsp; ] Good &nbsp;&nbsp; [ &nbsp; ] Excellent</div>
+        <div>Signature of Mentor</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- PAGE 2: 2ND PROGRESS REPORT (NOVEMBER 2026)                               -->
+  <!-- ========================================================================= -->
+  <div class="page-container">
+    <div class="header-table">
+      <div class="university-title">J. C. Bose University of Science & Technology, YMCA, Faridabad</div>
+      <div class="dept-title">DEPARTMENT OF COMPUTER SCIENCE & ENGINEERING</div>
+      <div class="report-title">Progress Report for B.Tech. Capstone Project</div>
+      <div class="term-heading">2nd Progress Report (Nov. 2026)</div>
+    </div>
+
+    <table class="meta-table">
+      <tr>
+        <td class="meta-label">Name of Student</td>
+        <td>: <span class="meta-dots">&nbsp;[Student Name / Your Name]&nbsp;</span></td>
+      </tr>
+      <tr>
+        <td class="meta-label">Name of Mentor</td>
+        <td>: <span class="meta-dots">&nbsp;[Mentor / Guide Name]&nbsp;</span></td>
+      </tr>
+      <tr>
+        <td class="meta-label">Roll No.</td>
+        <td>: <span class="meta-dots">&nbsp;[University Roll Number]&nbsp;</span></td>
+      </tr>
+      <tr>
+        <td class="meta-label">Name and Roll No of team member</td>
+        <td>: <span class="meta-dots">&nbsp;[Team Member Name & Roll No. / Individual Project]&nbsp;</span></td>
+      </tr>
+      <tr>
+        <td class="meta-label">Title of Project</td>
+        <td>: <span class="meta-dots" style="font-weight: bold;">Automated Web-Based Print Shop Management and Direct Spooling System</span></td>
+      </tr>
+    </table>
+
+    <div class="section-title">Progress Summary</div>
+    <p class="summary-text">
+      Phase 2 (November 2026) achieved complete system implementation, hardware driver integration, payment verification, and multi-tenant administrative control. The autonomous background print worker (<code>print_queue.py</code>) was fully implemented with individual file-level fault tolerance. Using <strong>PyMuPDF (<code>fitz</code>)</strong> and <strong>SumatraPDF</strong>, a high-precision document imposition engine was developed to handle N-up multi-page layouts (2, 4, 6, 9, 16 pages/sheet), duplex parity compensation (inserting blank trailing pages to prevent cross-document leakage), and dynamic cover slip generation with encrypted verification QR codes. Razorpay payment verification was secured via HMAC-SHA256 signature hashing. A comprehensive Shopkeeper Portal and customer live order tracking page with 6-character pickup codes were deployed alongside automated 24-hour file shredding routines.
+    </p>
+
+    <div class="section-title">Tasks Completed</div>
+    <ul class="task-list">
+      <li><strong>Autonomous Background Print Spooler:</strong> Implemented multi-threaded worker (<code>print_queue.py</code>) with 2-second polling, FCFS dispatch, atomic status updates, and fault recovery preventing duplicate file re-prints.</li>
+      <li><strong>PyMuPDF Imposition & N-up Layout Engine:</strong> Created automated PDF composer (<code>windows_printer.py</code>) that dynamically imposes pages into N-up grids, extracts selected subsets, and handles page dimensions (A4, A3, Letter).</li>
+      <li><strong>Hardware Spooling & Driver Automation:</strong> Successfully integrated SumatraPDF command-line execution for silent, dialog-free printing to configured Windows physical printers with duplex and color channel routing.</li>
+      <li><strong>Dynamic QR Code Cover Slip Generator:</strong> Integrated automated receipt/slip generation producing order metadata, pickup credentials, and scannable QR codes for counter verification.</li>
+      <li><strong>Razorpay Payment Security:</strong> Implemented server-side payment verification utilizing cryptographic HMAC-SHA256 hashing to confirm transaction legitimacy before queuing jobs.</li>
+      <li><strong>Shopkeeper Portal & Customer Tracker:</strong> Deployed live operational dashboard (<code>ShopDashboard.jsx</code>) for queue monitoring and manual re-prints, plus customer tracking UI (<code>TrackOrderPage.jsx</code>) with secure pickup codes.</li>
+      <li><strong>Automated Data Retention & Privacy Engine:</strong> Engineered automated lifecycle worker purging sensitive user documents immediately after successful printing or following a strict 24-hour expiration threshold.</li>
+    </ul>
+
+    <div class="section-title">Tasks in Progress</div>
+    <ul class="task-list">
+      <li><strong>Final Capstone Thesis & Documentation:</strong> Writing comprehensive project report, system architecture diagrams, UML state/sequence charts, and OpenAPI documentation.</li>
+      <li><strong>Pilot Campus Testing & Evaluation:</strong> Deploying the system across campus print counters to benchmark operational latency reduction and printer throughput under peak loads.</li>
+      <li><strong>Production Deployment & Service Daemonizing:</strong> Packaging the background queue daemon as an auto-recovering Windows Service (via NSSM) and configuring production environment variables.</li>
+    </ul>
+
+    <div class="sign-section">
+      <div>Date: 25/11/2026</div>
+      <div>(Signature of Student)</div>
+    </div>
+
+    <div class="mentor-box">
+      <div class="mentor-box-title">Report of the Mentor <span style="font-size: 9.5pt; font-weight: normal;">(to be filled by mentor)</span></div>
+      <div class="mentor-lines"></div>
+      <div class="mentor-sign-row">
+        <div>Assessment: [ &nbsp; ] Satisfactory &nbsp;&nbsp; [ &nbsp; ] Good &nbsp;&nbsp; [ &nbsp; ] Excellent</div>
+        <div>Signature of Mentor</div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

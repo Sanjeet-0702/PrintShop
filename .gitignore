@@ -1,0 +1,25 @@
+﻿.env
+backend/.env
+.venv/
+backend/.venv/
+venv/
+__pycache__/
+*.py[cod]
+backend/printshop.db
+backend/printshop.db.bak
+backend/uploads/
+uploads/
+node_modules/
+frontend/node_modules/
+frontend/dist/
+# Test PDFs
+backend/static/test_slip.pdf
+test_doc.pdf
+
+*.db
+*.db-*
+*.db.*
+*.bak
+*.last.jsx
+*.original_working.jsx
+*.recovered.css

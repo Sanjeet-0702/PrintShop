@@ -1,0 +1,20 @@
+{
+  "name": "printshop-customer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "pdfjs-dist": "5.4.296",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-pdf": "^10.4.1",
+    "typescript": "latest",
+    "vite": "latest"
+  }
+}

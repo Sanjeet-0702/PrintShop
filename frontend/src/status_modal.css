@@ -1,0 +1,418 @@
+css_path = r"frontend/src/styles.css"
+
+new_css = """
+/* ==========================================================================
+   STORE AVAILABILITY & LIVE STATUS INDICATOR (CUSTOMER & ADMIN)
+   ========================================================================== */
+
+.ps-brand-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ps-customer-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  transition: all 0.2s ease;
+}
+
+.ps-customer-live-pill.open {
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+
+.ps-customer-live-pill.closed {
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.ps-pulse-dot {
+  width: 7px;
+  height: 7px;
+  background-color: #10b981;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: ps-pulse 2s infinite;
+}
+
+@keyframes ps-pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.ps-closed-dot {
+  width: 7px;
+  height: 7px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* CUSTOMER CLOSED STORE BANNER */
+.ps-store-closed-banner {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1.5px solid #fde68a;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 16px auto 24px auto;
+  max-width: 800px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.08);
+}
+
+.ps-closed-banner-icon {
+  color: #d97706;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.ps-closed-banner-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ps-closed-banner-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #92400e;
+}
+
+.ps-closed-banner-text {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #78350f;
+}
+
+.ps-closed-banner-back-time {
+  font-size: 0.84rem;
+  color: #b45309;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(217, 119, 6, 0.2);
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 6px;
+  margin-top: 4px;
+  width: fit-content;
+}
+
+.ps-closed-banner-sub {
+  font-size: 0.78rem;
+  color: #a16207;
+  margin-top: 4px;
+}
+
+.ps-checkout-btn.disabled,
+.ps-checkout-btn:disabled {
+  background: #94a3b8 !important;
+  cursor: not-allowed !important;
+  opacity: 0.85;
+  box-shadow: none !important;
+}
+
+/* ADMIN DASHBOARD STATUS CONTROLS */
+.ps-dash-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ps-dash-status-badge.open {
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+
+.ps-dash-status-badge.open:hover {
+  background: #d1fae5;
+}
+
+.ps-dash-status-badge.closed {
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.ps-dash-status-badge.closed:hover {
+  background: #fee2e2;
+}
+
+.ps-badge-edit-hint {
+  font-size: 0.65rem;
+  color: #64748b;
+  font-weight: 600;
+  margin-left: 2px;
+}
+
+.ps-dash-availability-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.ps-dash-availability-btn.is-open {
+  background: #ecfdf5;
+  color: #059669;
+  border-color: #a7f3d0;
+}
+
+.ps-dash-availability-btn.is-open:hover {
+  background: #d1fae5;
+}
+
+.ps-dash-availability-btn.is-closed {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.ps-dash-availability-btn.is-closed:hover {
+  background: #fee2e2;
+}
+
+.ps-dash-alert-closed {
+  background: #fff7ed;
+  border: 1.5px solid #fed7aa;
+  border-radius: 10px;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.ps-alert-closed-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.ps-alert-closed-info {
+  flex: 1;
+  font-size: 0.85rem;
+  color: #9a3412;
+}
+
+.ps-alert-closed-info strong {
+  font-size: 0.9rem;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.ps-alert-closed-info p {
+  margin: 0;
+  color: #c2410c;
+}
+
+.ps-reopen-btn {
+  background: #16a34a;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.ps-reopen-btn:hover {
+  background: #15803d;
+}
+
+/* STATUS MODAL */
+.ps-status-modal {
+  max-width: 520px;
+  width: 100%;
+}
+
+.ps-status-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ps-status-modal-icon {
+  font-size: 1.6rem;
+}
+
+.ps-status-modal-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.ps-status-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 8px;
+}
+
+.ps-status-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.ps-status-radio-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.ps-status-radio-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 2px solid var(--border-light);
+  background: #ffffff;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.ps-status-radio-card:hover {
+  border-color: #93c5fd;
+}
+
+.ps-status-radio-card.selected {
+  border-color: #22c55e;
+  background: #f0fdf4;
+}
+
+.ps-status-radio-card.selected.away {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.ps-radio-indicator {
+  margin-top: 3px;
+}
+
+.ps-radio-details strong {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+
+.ps-radio-details span {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+  display: block;
+}
+
+.ps-presets-wrap {
+  background: var(--bg-subtle);
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.ps-preset-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ps-preset-pill {
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ps-preset-pill:hover {
+  border-color: #3b82f6;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.ps-preset-pill.open-preset {
+  color: #16a34a;
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.ps-preset-pill.open-preset:hover {
+  background: #dcfce7;
+}
+
+.ps-status-feedback-msg {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.ps-status-feedback-msg.success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.ps-status-feedback-msg.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.ps-status-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+"""
+
+with open(css_path, "a", encoding="utf-8") as f:
+    f.write("\n" + new_css)
+
+print("CSS appended successfully!")
