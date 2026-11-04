@@ -472,8 +472,13 @@ function App() {
 
       const createdOrder = data.order;
 
-      // Online payment via Razorpay if chosen
-      if (paymentMethod === "online" && window.Razorpay) {
+      // Online payment via Razorpay
+      if (paymentMethod === "online") {
+        if (!window.Razorpay) {
+          throw new Error("Payment gateway is loading. Please check your internet connection or reload the page.");
+        }
+
+        let payData;
         try {
           const payResponse = await fetch(
             `${API_URL}/api/payments/create?order_number=${encodeURIComponent(
@@ -482,59 +487,80 @@ function App() {
             { method: "POST" }
           );
 
-          const payData = await payResponse.json();
+          payData = await payResponse.json();
 
-          if (payResponse.ok && payData.razorpay_order_id) {
-            const rzp = new window.Razorpay({
-              key: payData.key_id,
-              amount: payData.amount,
-              currency: payData.currency,
-              name: "PrintShop",
-              description: `Order ${createdOrder.order_number}`,
-              order_id: payData.razorpay_order_id,
-              prefill: {
-                name: customerName,
-                contact: cleanPhone,
-                email: customerEmail,
-              },
-              theme: { color: "#2563eb" },
-              handler: async (resp) => {
-                try {
-                  await fetch(`${API_URL}/api/payments/verify`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      order_number: createdOrder.order_number,
-                      pickup_code: createdOrder.pickup_code,
-                      razorpay_payment_id: resp.razorpay_payment_id,
-                      razorpay_order_id: resp.razorpay_order_id,
-                      razorpay_signature: resp.razorpay_signature,
-                    }),
-                  });
-                  createdOrder.payment_status = "PAID";
-                } catch (verifyErr) {
-                  console.error("Payment verification failed", verifyErr);
-                }
-                setPlacedOrder(createdOrder);
-                setShowCheckoutModal(false);
-              },
-              modal: {
-                ondismiss: () => {
-                  setPlacedOrder(createdOrder);
-                  setShowCheckoutModal(false);
-                },
-              },
-            });
-            rzp.open();
-            setOrderSubmitting(false);
-            return;
+          if (!payResponse.ok || !payData.razorpay_order_id) {
+            throw new Error(payData.detail || "Could not initiate payment. Please try again.");
           }
-        } catch (payErr) {
-          console.warn("Razorpay setup skipped; proceeding with counter pickup", payErr);
+        } catch (initErr) {
+          throw new Error(initErr.message || "Failed to initialize payment gateway.");
         }
+
+        const rzp = new window.Razorpay({
+          key: payData.key_id,
+          amount: payData.amount,
+          currency: payData.currency,
+          name: "PrintShop",
+          description: `Order ${createdOrder.order_number}`,
+          order_id: payData.razorpay_order_id,
+          prefill: {
+            name: customerName,
+            contact: cleanPhone,
+            email: customerEmail,
+          },
+          theme: { color: "#2563eb" },
+          handler: async (resp) => {
+            setOrderSubmitting(true);
+            try {
+              const verifyRes = await fetch(`${API_URL}/api/payments/verify`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  order_number: createdOrder.order_number,
+                  pickup_code: createdOrder.pickup_code,
+                  razorpay_payment_id: resp.razorpay_payment_id,
+                  razorpay_order_id: resp.razorpay_order_id,
+                  razorpay_signature: resp.razorpay_signature,
+                }),
+              });
+
+              const verifyData = await verifyRes.json();
+              if (!verifyRes.ok || !verifyData.success) {
+                throw new Error(verifyData.detail || verifyData.message || "Payment verification failed.");
+              }
+
+              // ONLY when payment verification succeeds:
+              createdOrder.payment_status = "PAID";
+              createdOrder.order_status = "QUEUED";
+              setPlacedOrder(createdOrder);
+              setShowCheckoutModal(false);
+              setOrderError("");
+            } catch (verifyErr) {
+              setOrderError(`Payment verification failed: ${verifyErr.message}. If your account was debited, please show your payment proof at the counter.`);
+            } finally {
+              setOrderSubmitting(false);
+            }
+          },
+          modal: {
+            ondismiss: () => {
+              setOrderSubmitting(false);
+              setOrderError("⚠️ Payment was cancelled or not completed. Your order has NOT been placed. Please complete payment to place your order.");
+            },
+          },
+        });
+
+        rzp.on("payment.failed", (response) => {
+          setOrderSubmitting(false);
+          const reason = response?.error?.description || response?.error?.reason || "Transaction was declined.";
+          setOrderError(`❌ Payment failed: ${reason}. Your order has NOT been placed.`);
+        });
+
+        rzp.open();
+        setOrderSubmitting(false);
+        return;
       }
 
-      // Order created successfully (Pay at counter or fallback)
+      // Fallback for non-online payment methods
       setPlacedOrder(createdOrder);
       setShowCheckoutModal(false);
     } catch (err) {
