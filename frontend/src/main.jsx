@@ -29,7 +29,17 @@ import {
 
 import "./styles.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+function getCleanApiUrl() {
+  let raw = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  raw = String(raw).trim();
+  raw = raw.replace(/\/+$/, "");
+  if (raw.endsWith("/api")) {
+    raw = raw.slice(0, -4);
+  }
+  return raw.replace(/\/+$/, "") || "http://localhost:8000";
+}
+
+const API_URL = getCleanApiUrl();
 
 // Shop slug from URL: e.g. http://localhost:5173/?shop=campus-xerox
 const SHOP_SLUG =

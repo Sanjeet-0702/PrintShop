@@ -206,6 +206,7 @@ def list_registered_shops(db: Session = Depends(get_db)):
 
 
 @router.post("/api/shop-admin/register")
+@router.post("/api/shop-admin/register/")
 def shop_register(
     data: RegisterRequest,
     db: Session = Depends(get_db),
@@ -258,6 +259,7 @@ def shop_register(
 
 
 @router.post("/api/shop-admin/login")
+@router.post("/api/shop-admin/login/")
 def shop_login(
     request: Request,
     data: LoginRequest,
