@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { SearchIcon, XIcon, MapPinIcon, CheckIcon, ClipboardIcon } from "./Icons";
 
 const STEPS = [
   { key: "QUEUED", label: "Queued" },
@@ -118,7 +119,7 @@ export default function TrackOrderModal({
       {/* MODAL HEADER */}
       <div className="ps-modal-header ps-track-modal-header">
         <div className="ps-track-title-wrap">
-          <span className="ps-track-header-icon">🔍</span>
+          <span className="ps-track-header-icon"><SearchIcon size={16} color="var(--primary-blue)" strokeWidth={1.65} /></span>
           <div>
             <h3>Track Print Order</h3>
             <p className="ps-track-header-sub">
@@ -133,7 +134,7 @@ export default function TrackOrderModal({
             onClick={onClose}
             aria-label="Close"
           >
-            ✕
+            <XIcon size={13} strokeWidth={1.75} />
           </button>
         )}
       </div>
@@ -147,11 +148,11 @@ export default function TrackOrderModal({
 
               <div className="ps-track-inputs-row">
                 <label className="ps-form-field">
-                  <span>Order Number</span>
+                  <span>Order ID / Number</span>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. PS-10005"
+                    placeholder="e.g. ORD-001"
                     value={orderNumber}
                     onChange={(e) => setOrderNumber(e.target.value.toUpperCase())}
                     className="ps-mono-input"
@@ -163,10 +164,11 @@ export default function TrackOrderModal({
                   <input
                     type="text"
                     required
-                    maxLength={8}
-                    placeholder="e.g. L9AVT8"
+                    inputMode="numeric"
+                    maxLength={4}
+                    placeholder="4 digits (e.g. 4829)"
                     value={pickupCode}
-                    onChange={(e) => setPickupCode(e.target.value.toUpperCase())}
+                    onChange={(e) => setPickupCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
                     className="ps-mono-input"
                   />
                 </label>
@@ -187,8 +189,8 @@ export default function TrackOrderModal({
               <div className="ps-track-summary-strip">
                 <div className="ps-track-order-meta">
                   <span className="ps-track-order-num">{order.order_number}</span>
-                  <span className="ps-track-shop-name">
-                    📍 {order.shop_name || "Print Store"}
+                  <span className="ps-track-shop-name" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <MapPinIcon size={11} strokeWidth={1.6} /> {order.shop_name || "Print Store"}
                   </span>
                 </div>
 
@@ -197,7 +199,7 @@ export default function TrackOrderModal({
                   <div className="ps-track-code-val">
                     <strong>{order.pickup_code}</strong>
                     <span className="ps-track-copy-icon">
-                      {copiedCode ? "✓" : "📋"}
+                      {copiedCode ? <CheckIcon size={11} color="#16a34a" strokeWidth={1.75} /> : <ClipboardIcon size={11} strokeWidth={1.75} />}
                     </span>
                   </div>
                 </div>
@@ -224,7 +226,7 @@ export default function TrackOrderModal({
                         className={`ps-step-node ${isDone ? "done" : ""} ${isActive ? "active" : ""}`}
                       >
                         <div className="ps-step-circle">
-                          {isDone ? "✓" : isActive && currentStatus === "COLLECTED" ? "✓" : idx + 1}
+                          {isDone ? <CheckIcon size={9} strokeWidth={2} /> : isActive && currentStatus === "COLLECTED" ? <CheckIcon size={9} strokeWidth={2} /> : idx + 1}
                         </div>
                         <span className="ps-step-text">{step.label}</span>
                       </div>
@@ -239,14 +241,14 @@ export default function TrackOrderModal({
                 <div className="ps-status-msg-text">
                   <strong>
                     {currentStatus === "READY"
-                      ? "🎉 Order is Ready for Collection!"
+                      ? "Order is Ready for Collection!"
                       : currentStatus === "COLLECTED"
-                      ? "✓ Order Handed Over"
+                      ? "Order Handed Over"
                       : currentStatus === "PRINTING"
-                      ? "🖨️ Printing in Progress..."
+                      ? "Printing in Progress..."
                       : isFailed
-                      ? "⚠️ Print Error"
-                      : "⏳ Order Queued"}
+                      ? "Print Error"
+                      : "Order Queued"}
                   </strong>
                   <p>{STATUS_MESSAGES[currentStatus] || "Updating print status..."}</p>
                 </div>
@@ -269,7 +271,13 @@ export default function TrackOrderModal({
                 <div className="ps-quick-metric">
                   <span className="ps-metric-lbl">Payment</span>
                   <strong className={order.payment_status === "PAID" ? "text-green" : "text-amber"}>
-                    {order.payment_status === "PAID" ? "✓ Paid Online" : "Payment Pending"}
+                    {order.payment_status === "PAID" ? (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        <CheckIcon size={11} strokeWidth={1.75} /> Paid Online
+                      </span>
+                    ) : (
+                      "Payment Pending"
+                    )}
                   </strong>
                 </div>
               </div>

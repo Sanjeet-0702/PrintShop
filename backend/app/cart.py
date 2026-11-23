@@ -21,6 +21,7 @@ from . import models
 from .database import get_db
 from .file_service import resolve_stored_file
 from .security import codes_match, generate_pickup_code
+from .order_utils import generate_daily_order_number
 
 log = logging.getLogger("uvicorn.error")
 
@@ -105,9 +106,9 @@ def _get_shop(db: Session, slug: str) -> models.Shop:
 def _build_quote(shop: models.Shop, items: list[CartItem]) -> dict:
     """Validates every file on the server and prices the whole cart using shop custom rates."""
 
-    shop_bw = float(getattr(shop, "bw_rate", 3.0) or 3.0)
-    shop_color = float(getattr(shop, "color_rate", 10.0) or 10.0)
-    shop_handling = float(getattr(shop, "handling_charge", 0.0) or 0.0)
+    shop_bw = float(shop.bw_rate) if getattr(shop, "bw_rate", None) is not None else 3.0
+    shop_color = float(shop.color_rate) if getattr(shop, "color_rate", None) is not None else 10.0
+    shop_handling = float(shop.handling_charge) if getattr(shop, "handling_charge", None) is not None else 0.0
 
     shop_rates = {
         "bw": shop_bw,
@@ -231,9 +232,9 @@ def rates(shop_slug: str | None = None, db: Session = Depends(get_db)):
     if shop_slug:
         try:
             shop = _get_shop(db, shop_slug)
-            bw = float(getattr(shop, "bw_rate", 3.0) or 3.0)
-            color = float(getattr(shop, "color_rate", 10.0) or 10.0)
-            handling = float(getattr(shop, "handling_charge", 0.0) or 0.0)
+            bw = float(shop.bw_rate) if getattr(shop, "bw_rate", None) is not None else 3.0
+            color = float(shop.color_rate) if getattr(shop, "color_rate", None) is not None else 10.0
+            handling = float(shop.handling_charge) if getattr(shop, "handling_charge", None) is not None else 0.0
             return {
                 "success": True,
                 "bw_per_page": bw,
@@ -328,7 +329,7 @@ def create_cart_order(data: CartOrderCreate, db: Session = Depends(get_db)):
         )
         db.add(order)
         db.flush()
-        order.order_number = f"PS-{10000 + order.id}"
+        order.order_number = generate_daily_order_number(db, shop.id)
 
         for position, line in enumerate(lines):
             item = line["item"]
@@ -393,6 +394,7 @@ def get_cart_order(
     order = (
         db.query(models.Order)
         .filter(models.Order.order_number == order_number)
+        .order_by(models.Order.id.desc())
         .first()
     )
     if not order or not codes_match(order.pickup_code, pickup_code):

@@ -6,6 +6,46 @@ import React, {
   useRef,
   useState,
 } from "react";
+import {
+  PrinterIcon,
+  DocumentIcon,
+  FolderIcon,
+  LockIcon,
+  LightningIcon,
+  SearchIcon,
+  ReceiptIcon,
+  ChartIcon,
+  SmartphoneIcon,
+  PhoneIcon,
+  MailIcon,
+  MapPinIcon,
+  StarIcon,
+  MegaphoneIcon,
+  ImageIcon,
+  SaveIcon,
+  SettingsIcon,
+  ClipboardIcon,
+  EditIcon,
+  PackageIcon,
+  AlertTriangleIcon,
+  CheckIcon,
+  CheckCircleIcon,
+  XIcon,
+  PauseIcon,
+  PlayIcon,
+  CoffeeIcon,
+  ClockIcon,
+  MoonIcon,
+  TagIcon,
+  PaletteIcon,
+  MonochromeIcon,
+  StoreIcon,
+  QrCodeIcon,
+  RefreshIcon,
+  EyeIcon,
+  EyeOffIcon,
+} from "./Icons";
+
 
 const TOKEN_KEY = "printshop_shop_token";
 
@@ -112,6 +152,7 @@ export default function ShopDashboard({ apiUrl }) {
   const [slug, setSlug] = useState(initialSlug);
   const [token, setToken] = useState(readSavedToken());
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [loggingIn, setLoggingIn] = useState(false);
 
@@ -119,6 +160,7 @@ export default function ShopDashboard({ apiUrl }) {
   const [regName, setRegName] = useState("");
   const [regSlug, setRegSlug] = useState("");
   const [regPassword, setRegPassword] = useState("");
+  const [showRegPassword, setShowRegPassword] = useState(false);
   const [regSupportsBw, setRegSupportsBw] = useState(true);
   const [regSupportsColor, setRegSupportsColor] = useState(true);
   const [regError, setRegError] = useState("");
@@ -165,16 +207,22 @@ export default function ShopDashboard({ apiUrl }) {
 
   // Pricing Configuration State
   const [showPricingModal, setShowPricingModal] = useState(false);
+  const pricingModalOpenRef = useRef(false);
   const [pricingBw, setPricingBw] = useState(3.0);
   const [pricingColor, setPricingColor] = useState(10.0);
-  const [pricingHandling, setPricingHandling] = useState(5.0);
+  const [pricingHandling, setPricingHandling] = useState(0.0);
   const [loadingPricing, setLoadingPricing] = useState(false);
   const [savingPricing, setSavingPricing] = useState(false);
   const [pricingFeedback, setPricingFeedback] = useState("");
 
+  useEffect(() => {
+    pricingModalOpenRef.current = showPricingModal;
+  }, [showPricingModal]);
+
   // Order Slip & Advertisement State
   const [showSlipModal, setShowSlipModal] = useState(false);
   const [slipConfig, setSlipConfig] = useState({
+    is_enabled: false,
     tagline: "",
     promo_title: "",
     promo_body: "",
@@ -263,7 +311,7 @@ export default function ShopDashboard({ apiUrl }) {
           back_at: statusBackAt.trim() || null,
         },
       }));
-      setStatusFeedback("✓ Store status updated successfully!");
+      setStatusFeedback("Store status updated successfully!");
       setTimeout(() => {
         setShowStatusModal(false);
         setStatusFeedback("");
@@ -334,9 +382,17 @@ export default function ShopDashboard({ apiUrl }) {
       }
 
       setData(body);
-      if (body.shop?.bw_rate !== undefined) setPricingBw(body.shop.bw_rate);
-      if (body.shop?.color_rate !== undefined) setPricingColor(body.shop.color_rate);
-      if (body.shop?.handling_charge !== undefined) setPricingHandling(body.shop.handling_charge);
+      if (!pricingModalOpenRef.current) {
+        if (body.shop?.bw_rate !== undefined && body.shop?.bw_rate !== null) {
+          setPricingBw(Number(body.shop.bw_rate));
+        }
+        if (body.shop?.color_rate !== undefined && body.shop?.color_rate !== null) {
+          setPricingColor(Number(body.shop.color_rate));
+        }
+        if (body.shop?.handling_charge !== undefined && body.shop?.handling_charge !== null) {
+          setPricingHandling(Number(body.shop.handling_charge));
+        }
+      }
       setError("");
     } catch (err) {
       setError(err.message || "Could not load orders");
@@ -420,7 +476,7 @@ export default function ShopDashboard({ apiUrl }) {
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.detail || "Failed to save printer settings");
-      setPrinterFeedback("✓ Printer settings updated successfully!");
+      setPrinterFeedback("Printer settings updated successfully!");
       setTimeout(() => {
         setShowPrinterModal(false);
         setPrinterFeedback("");
@@ -458,7 +514,7 @@ export default function ShopDashboard({ apiUrl }) {
       });
       const body = await res.json().catch(() => ({ detail: "Failed to reach server. Check backend is running." }));
       if (!res.ok) throw new Error(body.detail || "Test print failed");
-      setPrinterFeedback(`✓ Test page sent to '${targetPrinter}'!`);
+      setPrinterFeedback(`Test page sent to '${targetPrinter}'!`);
     } catch (err) {
       setPrinterFeedback(`Error: ${err.message}`);
     } finally {
@@ -510,11 +566,11 @@ export default function ShopDashboard({ apiUrl }) {
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.detail || "Failed to save settings");
-      setSlipFeedback("✓ Advertisement & Order Slip saved successfully!");
+      setSlipFeedback("Advertisement & Order Slip saved successfully!");
       if (body.config) setSlipConfig(body.config);
       setTimeout(() => setSlipFeedback(""), 4000);
     } catch (err) {
-      setSlipFeedback(`⚠️ Error: ${err.message}`);
+      setSlipFeedback(`Error: ${err.message}`);
     } finally {
       setSavingSlip(false);
     }
@@ -539,9 +595,9 @@ export default function ShopDashboard({ apiUrl }) {
         logo_url: body.logo_url,
         has_logo: true,
       }));
-      setSlipFeedback("✓ Logo uploaded successfully!");
+      setSlipFeedback("Logo uploaded successfully!");
     } catch (err) {
-      setSlipFeedback(`⚠️ Upload failed: ${err.message}`);
+      setSlipFeedback(`Upload failed: ${err.message}`);
     } finally {
       setUploadingLogo(false);
     }
@@ -555,10 +611,10 @@ export default function ShopDashboard({ apiUrl }) {
       });
       if (res.ok) {
         setSlipConfig((prev) => ({ ...prev, logo_url: "", has_logo: false }));
-        setSlipFeedback("✓ Logo removed.");
+        setSlipFeedback("Logo removed.");
       }
     } catch (err) {
-      setSlipFeedback(`⚠️ Could not remove logo: ${err.message}`);
+      setSlipFeedback(`Could not remove logo: ${err.message}`);
     }
   };
 
@@ -589,9 +645,15 @@ export default function ShopDashboard({ apiUrl }) {
       });
       const body = await res.json();
       if (res.ok) {
-        setPricingBw(Number(body.bw_rate) || 3.0);
-        setPricingColor(Number(body.color_rate) || 10.0);
-        setPricingHandling(Number(body.handling_charge) || 0.0);
+        if (body.bw_rate !== undefined && body.bw_rate !== null) {
+          setPricingBw(Number(body.bw_rate));
+        }
+        if (body.color_rate !== undefined && body.color_rate !== null) {
+          setPricingColor(Number(body.color_rate));
+        }
+        if (body.handling_charge !== undefined && body.handling_charge !== null) {
+          setPricingHandling(Number(body.handling_charge));
+        }
       }
     } catch (e) {
       console.error("Could not load pricing:", e);
@@ -605,6 +667,18 @@ export default function ShopDashboard({ apiUrl }) {
     setSavingPricing(true);
     setPricingFeedback("");
     try {
+      const bwVal = parseFloat(pricingBw);
+      const colorVal = parseFloat(pricingColor);
+      const rawHandling = parseFloat(pricingHandling);
+
+      if (isNaN(bwVal) || bwVal < 0.5) {
+        throw new Error("Black & White rate must be at least ₹0.50 per page.");
+      }
+      if (isNaN(colorVal) || colorVal < 0.5) {
+        throw new Error("Colour print rate must be at least ₹0.50 per page.");
+      }
+      const handlingVal = isNaN(rawHandling) || rawHandling < 0 ? 0.0 : rawHandling;
+
       const res = await fetch(`${apiUrl}/api/shop-admin/pricing`, {
         method: "POST",
         headers: {
@@ -612,21 +686,24 @@ export default function ShopDashboard({ apiUrl }) {
           Authorization: `Bearer ${tokenRef.current}`,
         },
         body: JSON.stringify({
-          bw_rate: parseFloat(pricingBw),
-          color_rate: parseFloat(pricingColor),
-          handling_charge: parseFloat(pricingHandling),
+          bw_rate: bwVal,
+          color_rate: colorVal,
+          handling_charge: handlingVal,
         }),
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.detail || "Failed to update pricing");
-      setPricingFeedback("✓ Print pricing updated successfully!");
+      setPricingFeedback("Print pricing updated successfully!");
+      setPricingBw(bwVal);
+      setPricingColor(colorVal);
+      setPricingHandling(handlingVal);
       setData((prev) => prev ? {
         ...prev,
         shop: {
           ...prev.shop,
-          bw_rate: parseFloat(pricingBw),
-          color_rate: parseFloat(pricingColor),
-          handling_charge: parseFloat(pricingHandling),
+          bw_rate: bwVal,
+          color_rate: colorVal,
+          handling_charge: handlingVal,
         }
       } : prev);
       setTimeout(() => {
@@ -634,7 +711,7 @@ export default function ShopDashboard({ apiUrl }) {
         setPricingFeedback("");
       }, 1200);
     } catch (err) {
-      setPricingFeedback(`⚠️ Error: ${err.message}`);
+      setPricingFeedback(`Error: ${err.message}`);
     } finally {
       setSavingPricing(false);
     }
@@ -767,13 +844,14 @@ export default function ShopDashboard({ apiUrl }) {
   };
 
   // ----------------------------------------------------------- order actions
-  const act = async (orderNumber, action, payload) => {
-    setBusy(orderNumber);
-    setRowMessage((prev) => ({ ...prev, [orderNumber]: "" }));
+  const act = async (orderIdOrNum, action, payload) => {
+    const key = String(orderIdOrNum);
+    setBusy(key);
+    setRowMessage((prev) => ({ ...prev, [key]: "" }));
 
     try {
       const response = await fetch(
-        `${apiUrl}/api/shop-admin/orders/${encodeURIComponent(orderNumber)}/${action}`,
+        `${apiUrl}/api/shop-admin/orders/${encodeURIComponent(orderIdOrNum)}/${action}`,
         {
           method: "POST",
           headers: {
@@ -796,14 +874,14 @@ export default function ShopDashboard({ apiUrl }) {
       }
 
       if (action === "handover") {
-        setCodes((prev) => ({ ...prev, [orderNumber]: "" }));
+        setCodes((prev) => ({ ...prev, [key]: "" }));
       }
 
       load();
     } catch (err) {
       setRowMessage((prev) => ({
         ...prev,
-        [orderNumber]: err.message || "Action failed",
+        [key]: err.message || "Action failed",
       }));
     } finally {
       setBusy("");
@@ -824,11 +902,12 @@ export default function ShopDashboard({ apiUrl }) {
   const orders = data?.orders || [];
   const collectedOrders = data?.collected || [];
 
-  // Combine orders
+  // Combine orders (deduplicated by unique order id)
   const allOrders = useMemo(() => {
     const map = new Map();
     [...orders, ...collectedOrders].forEach((o) => {
-      map.set(o.order_number, o);
+      const k = o.id != null ? String(o.id) : `${o.order_number}-${getOrderDate(o)}`;
+      map.set(k, o);
     });
     return Array.from(map.values()).sort((a, b) => {
       const dateA = new Date(getOrderDate(a) || 0).getTime();
@@ -870,11 +949,23 @@ export default function ShopDashboard({ apiUrl }) {
   }, [allOrders, dateFilter]);
 
   const dateFilteredActive = useMemo(() => {
-    return orders.filter((o) => matchesDate(o, dateFilter));
+    const seen = new Set();
+    return orders.filter((o) => {
+      const k = o.id != null ? String(o.id) : `${o.order_number}-${getOrderDate(o)}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return matchesDate(o, dateFilter);
+    });
   }, [orders, dateFilter]);
 
   const dateFilteredCollected = useMemo(() => {
-    return collectedOrders.filter((o) => matchesDate(o, dateFilter));
+    const seen = new Set();
+    return collectedOrders.filter((o) => {
+      const k = o.id != null ? String(o.id) : `${o.order_number}-${getOrderDate(o)}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return matchesDate(o, dateFilter);
+    });
   }, [collectedOrders, dateFilter]);
 
   // Counts by category within the selected date range
@@ -941,14 +1032,12 @@ export default function ShopDashboard({ apiUrl }) {
           {/* Header */}
           <div className="ps-admin-auth-header">
             <div className="ps-admin-logo">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 6 2 18 2 18 9" />
-                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                <rect x="6" y="14" width="12" height="8" />
-              </svg>
+              <PrinterIcon size={26} strokeWidth={1.8} color="#ffffff" />
             </div>
             <h1 className="ps-admin-title">PrintShop Store Portal</h1>
-            <p className="ps-admin-sub">Manage your print shop, live print queue, and counter pickups</p>
+            <p className="ps-admin-sub">
+              Manage your print shop, live print queue, and counter pickups
+            </p>
           </div>
 
           {/* Tab Selector: Sign In vs Register */}
@@ -958,59 +1047,98 @@ export default function ShopDashboard({ apiUrl }) {
               className={`ps-admin-tab ${authTab === "login" ? "active" : ""}`}
               onClick={() => { setAuthTab("login"); setLoginError(""); }}
             >
-              Shop Sign In
+              <LockIcon size={14} strokeWidth={1.8} />
+              <span>Shop Sign In</span>
             </button>
             <button
               type="button"
               className={`ps-admin-tab ${authTab === "register" ? "active" : ""}`}
               onClick={() => { setAuthTab("register"); setRegError(""); }}
             >
-              + Register New Shop
+              <StoreIcon size={14} strokeWidth={1.8} />
+              <span>Register New Shop</span>
             </button>
           </div>
 
           {/* TAB 1: SIGN IN */}
           {authTab === "login" && (
             <form onSubmit={handleLogin} className="ps-admin-form">
-              {loginError && <div className="ps-form-error">{loginError}</div>}
+              {loginError && (
+                <div className="ps-auth-alert">
+                  <div className="ps-auth-alert-icon">
+                    <AlertTriangleIcon size={16} strokeWidth={1.8} />
+                  </div>
+                  <div>{loginError}</div>
+                </div>
+              )}
 
-              <label className="ps-form-field">
-                <span>Shop Name or Store Link</span>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. YMCA ZEROX or ymca-zerox"
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                />
-                <small className="ps-field-hint">Enter your store name or the link name you chose during registration</small>
-              </label>
+              <div className="ps-auth-field-group">
+                <label className="ps-auth-label">
+                  <span>Shop Name or Store Link</span>
+                </label>
+                <div className="ps-auth-input-wrap">
+                  <span className="ps-auth-input-icon">
+                    <StoreIcon size={16} strokeWidth={1.75} />
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. ymca-zerox"
+                    value={slug}
+                    onChange={(e) => setSlug(e.target.value)}
+                    className="ps-auth-input"
+                  />
+                </div>
+                <small className="ps-auth-field-hint">
+                  Enter your store name or the link name you chose during registration
+                </small>
+              </div>
 
-              <label className="ps-form-field">
-                <span>Shopkeeper Password</span>
-                <input
-                  type="password"
-                  required
-                  autoFocus
-                  placeholder="Enter shop password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </label>
+              <div className="ps-auth-field-group">
+                <label className="ps-auth-label">
+                  <span>Shopkeeper Password</span>
+                </label>
+                <div className="ps-auth-input-wrap">
+                  <span className="ps-auth-input-icon">
+                    <LockIcon size={16} strokeWidth={1.75} />
+                  </span>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    autoFocus
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="ps-auth-input"
+                  />
+                  <button
+                    type="button"
+                    className="ps-auth-toggle-pwd"
+                    onClick={() => setShowPassword(!showPassword)}
+                    title={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <EyeOffIcon size={16} strokeWidth={1.75} />
+                    ) : (
+                      <EyeIcon size={16} strokeWidth={1.75} />
+                    )}
+                  </button>
+                </div>
+              </div>
 
               <button
                 type="submit"
                 disabled={loggingIn || !password}
-                className="ps-submit-order-btn"
+                className="ps-auth-submit-btn"
               >
-                {loggingIn ? "Signing In..." : "Sign In to Dashboard"}
+                {loggingIn ? "Signing In..." : "Sign In to Dashboard →"}
               </button>
 
               <div className="ps-auth-footer-note">
                 Need to create a new print shop?{" "}
                 <button
                   type="button"
-                  className="ps-link-btn"
+                  className="ps-auth-link"
                   onClick={() => { setAuthTab("register"); setRegError(""); }}
                 >
                   Register your shop here
@@ -1022,77 +1150,141 @@ export default function ShopDashboard({ apiUrl }) {
           {/* TAB 2: REGISTER NEW SHOP */}
           {authTab === "register" && (
             <form onSubmit={handleRegister} className="ps-admin-form">
-              {regError && <div className="ps-form-error">{regError}</div>}
+              {regError && (
+                <div className="ps-auth-alert">
+                  <div className="ps-auth-alert-icon">
+                    <AlertTriangleIcon size={16} strokeWidth={1.8} />
+                  </div>
+                  <div>{regError}</div>
+                </div>
+              )}
 
-              <label className="ps-form-field">
-                <span>Shop Name *</span>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Campus Xerox & Prints"
-                  value={regName}
-                  onChange={handleRegNameChange}
-                />
-              </label>
+              <div className="ps-auth-field-group">
+                <label className="ps-auth-label">
+                  <span>Shop Name *</span>
+                </label>
+                <div className="ps-auth-input-wrap">
+                  <span className="ps-auth-input-icon">
+                    <StoreIcon size={16} strokeWidth={1.75} />
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Campus Xerox & Prints"
+                    value={regName}
+                    onChange={handleRegNameChange}
+                    className="ps-auth-input"
+                  />
+                </div>
+              </div>
 
-              <label className="ps-form-field">
-                <span>Store Link / Slug *</span>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. campus-xerox"
-                  value={regSlug}
-                  onChange={(e) => setRegSlug(e.target.value.trim().toLowerCase())}
-                />
-                <small className="ps-field-hint">Customers will order at: ?shop={regSlug || "your-shop"}</small>
-              </label>
+              <div className="ps-auth-field-group">
+                <label className="ps-auth-label">
+                  <span>Store Link / Slug *</span>
+                </label>
+                <div className="ps-auth-input-wrap">
+                  <span className="ps-auth-input-icon">
+                    <DocumentIcon size={16} strokeWidth={1.75} />
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. campus-xerox"
+                    value={regSlug}
+                    onChange={(e) => setRegSlug(e.target.value.trim().toLowerCase())}
+                    className="ps-auth-input"
+                  />
+                </div>
+                <small className="ps-auth-field-hint">
+                  Customers will order at: ?shop={regSlug || "your-shop"}
+                </small>
+              </div>
 
-              <label className="ps-form-field">
-                <span>Choose Dashboard Password *</span>
-                <input
-                  type="password"
-                  required
-                  placeholder="Minimum 4 characters"
-                  value={regPassword}
-                  onChange={(e) => setRegPassword(e.target.value)}
-                />
-              </label>
+              <div className="ps-auth-field-group">
+                <label className="ps-auth-label">
+                  <span>Choose Dashboard Password *</span>
+                </label>
+                <div className="ps-auth-input-wrap">
+                  <span className="ps-auth-input-icon">
+                    <LockIcon size={16} strokeWidth={1.75} />
+                  </span>
+                  <input
+                    type={showRegPassword ? "text" : "password"}
+                    required
+                    placeholder="Minimum 4 characters"
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                    className="ps-auth-input"
+                  />
+                  <button
+                    type="button"
+                    className="ps-auth-toggle-pwd"
+                    onClick={() => setShowRegPassword(!showRegPassword)}
+                    title={showRegPassword ? "Hide password" : "Show password"}
+                  >
+                    {showRegPassword ? (
+                      <EyeOffIcon size={16} strokeWidth={1.75} />
+                    ) : (
+                      <EyeIcon size={16} strokeWidth={1.75} />
+                    )}
+                  </button>
+                </div>
+              </div>
 
-              <div className="ps-services-checkboxes">
-                <span className="ps-field-title">Printing Services Offered</span>
-                <div className="ps-checkbox-group">
-                  <label className="ps-checkbox-label">
+              <div className="ps-auth-services-box">
+                <label className="ps-auth-label">
+                  <span>Printing Services Offered</span>
+                </label>
+                <div className="ps-auth-service-cards">
+                  <div
+                    className={`ps-auth-service-card ${regSupportsBw ? "active" : ""}`}
+                    onClick={() => setRegSupportsBw(!regSupportsBw)}
+                  >
+                    <div className="ps-auth-service-info">
+                      <MonochromeIcon size={16} strokeWidth={1.75} color={regSupportsBw ? "#15803d" : "#64748b"} />
+                      <span className="ps-auth-service-title">B&amp;W Xerox</span>
+                    </div>
                     <input
                       type="checkbox"
                       checked={regSupportsBw}
                       onChange={(e) => setRegSupportsBw(e.target.checked)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="ps-auth-service-checkbox"
                     />
-                    <span>Black &amp; White Printing</span>
-                  </label>
-                  <label className="ps-checkbox-label">
+                  </div>
+
+                  <div
+                    className={`ps-auth-service-card ${regSupportsColor ? "active" : ""}`}
+                    onClick={() => setRegSupportsColor(!regSupportsColor)}
+                  >
+                    <div className="ps-auth-service-info">
+                      <PaletteIcon size={16} strokeWidth={1.75} color={regSupportsColor ? "#15803d" : "#64748b"} />
+                      <span className="ps-auth-service-title">Colour Print</span>
+                    </div>
                     <input
                       type="checkbox"
                       checked={regSupportsColor}
                       onChange={(e) => setRegSupportsColor(e.target.checked)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="ps-auth-service-checkbox"
                     />
-                    <span>Colour Printing</span>
-                  </label>
+                  </div>
                 </div>
               </div>
 
               <button
                 type="submit"
                 disabled={registering}
-                className="ps-submit-order-btn"
+                className="ps-auth-submit-btn"
               >
-                {registering ? "Creating Your Shop..." : "Create Shop & Open Dashboard"}
+                {registering ? "Creating Your Shop..." : "Create Shop & Open Dashboard →"}
               </button>
 
               <div className="ps-auth-footer-note">
                 Already registered?{" "}
                 <button
                   type="button"
-                  className="ps-link-btn"
+                  className="ps-auth-link"
                   onClick={() => { setAuthTab("login"); setLoginError(""); }}
                 >
                   Sign in here
@@ -1101,6 +1293,10 @@ export default function ShopDashboard({ apiUrl }) {
             </form>
           )}
         </div>
+
+        <a href="/" className="ps-auth-back-link">
+          ← Return to Customer Printing Portal
+        </a>
       </div>
     );
   }
@@ -1139,20 +1335,20 @@ export default function ShopDashboard({ apiUrl }) {
                     <>
                       <span className="ps-pulse-dot" />
                       <span>Live • Open</span>
-                      <span className="ps-badge-edit-hint">Change ⚙️</span>
+                      <span className="ps-badge-edit-hint" style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>Change <SettingsIcon size={10} strokeWidth={1.5} /></span>
                     </>
                   ) : (
                     <>
                       <span className="ps-closed-dot" />
                       <span>Away / Closed</span>
-                      <span className="ps-badge-edit-hint">Change ⚙️</span>
+                      <span className="ps-badge-edit-hint" style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>Change <SettingsIcon size={10} strokeWidth={1.5} /></span>
                     </>
                   )}
                 </button>
               </div>
               <div className="ps-dash-link-row">
                 <button type="button" className="ps-dash-copy-btn" onClick={copyCustomerLink} title="Copy your customer ordering link to clipboard">
-                  {copiedLink ? "✓ Copied!" : "📋 Copy Link"}
+                  {copiedLink ? <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><CheckIcon size={11} strokeWidth={1.75} /> Copied!</span> : <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><ClipboardIcon size={11} strokeWidth={1.75} /> Copy Link</span>}
                 </button>
                 <a
                   href={`/?shop=${encodeURIComponent(data?.shop?.slug || data?.shop_slug || slug)}`}
@@ -1185,7 +1381,7 @@ export default function ShopDashboard({ apiUrl }) {
                     marginLeft: 4,
                   }}
                 >
-                  Rates: <strong>B&W ₹{data?.shop?.bw_rate !== undefined ? data.shop.bw_rate : pricingBw}</strong> · <strong>Colour ₹{data?.shop?.color_rate !== undefined ? data.shop.color_rate : pricingColor}</strong> ✏️
+                  Rates: <strong>B&W ₹{data?.shop?.bw_rate !== undefined ? data.shop.bw_rate : pricingBw}</strong> · <strong>Colour ₹{data?.shop?.color_rate !== undefined ? data.shop.color_rate : pricingColor}</strong> <EditIcon size={11} style={{ marginLeft: 3 }} />
                 </button>
               </div>
             </div>
@@ -1214,7 +1410,7 @@ export default function ShopDashboard({ apiUrl }) {
                 cursor: "pointer",
               }}
             >
-              💰 Set Prices
+              <TagIcon size={12} strokeWidth={1.65} /> Set Prices
             </button>
             <button
               type="button"
@@ -1227,7 +1423,7 @@ export default function ShopDashboard({ apiUrl }) {
               }}
               title="Change your store's live availability status"
             >
-              {data?.shop?.is_open === false ? "⏸️ Store is Away" : "🟢 Store is Open"}
+              {data?.shop?.is_open === false ? <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><PauseIcon size={12} strokeWidth={1.65} /> Store is Away</span> : <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><span className="ps-pulse-dot" /> Store is Open</span>}
             </button>
             <button
               type="button"
@@ -1238,7 +1434,7 @@ export default function ShopDashboard({ apiUrl }) {
               }}
               title="Configure B&W and Color printers connected to this PC (USB or Wi-Fi)"
             >
-              🖨️ Printer Setup
+              <PrinterIcon size={12} strokeWidth={1.65} /> Printer Setup
             </button>
             <button
               type="button"
@@ -1249,14 +1445,14 @@ export default function ShopDashboard({ apiUrl }) {
               }}
               title="Customize your Order Slip Receipt & Shop Advertisement"
             >
-              🧾 Order Slip & Ads
+              <ReceiptIcon size={12} strokeWidth={1.65} /> Order Slip & Ads
             </button>
             <button
               type="button"
               className="ps-dash-qr-btn"
               onClick={() => setShowQr(true)}
             >
-              📱 Counter QR Code
+              <QrCodeIcon size={12} strokeWidth={1.65} /> Counter QR Code
             </button>
             <button
               type="button"
@@ -1268,7 +1464,7 @@ export default function ShopDashboard({ apiUrl }) {
               }}
               title="Permanently delete this registered shop"
             >
-              🗑️ Delete Store
+              <XIcon size={11} strokeWidth={1.75} /> Delete Store
             </button>
             <button
               type="button"
@@ -1286,7 +1482,7 @@ export default function ShopDashboard({ apiUrl }) {
         {/* Closed / Away Warning Strip */}
         {data?.shop?.is_open === false && (
           <div className="ps-dash-alert-closed">
-            <div className="ps-alert-closed-icon">⏸️</div>
+            <div className="ps-alert-closed-icon"><PauseIcon size={15} strokeWidth={1.65} /></div>
             <div className="ps-alert-closed-info">
               <strong>Your Store is Currently AWAY / CLOSED</strong>
               <p>
@@ -1299,7 +1495,7 @@ export default function ShopDashboard({ apiUrl }) {
               className="ps-reopen-btn"
               onClick={handleQuickReopen}
             >
-              🟢 Re-Open Store Now
+              <PlayIcon size={12} strokeWidth={1.65} /> Re-Open Store Now
             </button>
           </div>
         )}
@@ -1346,20 +1542,18 @@ export default function ShopDashboard({ apiUrl }) {
                 </svg>
                 <input
                   type="text"
-                  placeholder="Search order # (e.g. PS-10025)..."
+                  placeholder="Search order ID (e.g. ORD-001)..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
                 {searchQuery && (
-                  <button type="button" className="ps-clear-search-btn" onClick={() => setSearchQuery("")}>
-                    ✕
-                  </button>
+                  <button type="button" className="ps-clear-search-btn" onClick={() => setSearchQuery("")}><XIcon size={13} strokeWidth={1.75} /></button>
                 )}
               </div>
 
               {/* Date Filter Buttons */}
               <div className="ps-date-filter-group">
-                <span className="ps-date-filter-label">📅 DATE:</span>
+                <span className="ps-date-filter-label" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><ClockIcon size={11} strokeWidth={1.5} /> DATE:</span>
                 <button
                   type="button"
                   className={`ps-date-pill ${dateFilter === "all" ? "active" : ""}`}
@@ -1447,7 +1641,7 @@ export default function ShopDashboard({ apiUrl }) {
           <div className="ps-orders-grid-scroll-wrap">
             {displayedOrders.length === 0 ? (
               <div className="ps-orders-empty-state">
-                <div className="ps-empty-icon">📭</div>
+                <div className="ps-empty-icon"><FolderIcon size={26} color="#94a3b8" strokeWidth={1.5} /></div>
                 <h3 className="ps-empty-title">No orders in this folder</h3>
                 <p className="ps-empty-sub">
                   {searchQuery
@@ -1459,11 +1653,12 @@ export default function ShopDashboard({ apiUrl }) {
               <div className="ps-orders-grid">
                 {displayedOrders.map((order) => {
                   const status = order.order_status;
-                  const isBusy = busy === order.order_number;
-                  const rowMsg = rowMessage[order.order_number];
+                  const orderKey = order.id != null ? String(order.id) : order.order_number;
+                  const isBusy = busy === orderKey;
+                  const rowMsg = rowMessage[orderKey];
 
                   return (
-                    <div key={order.order_number} className="ps-order-grid-card">
+                    <div key={orderKey} className="ps-order-grid-card">
                       {/* Top Row: Order # and Status Pill */}
                       <div className="ps-card-top-row">
                         <strong className="ps-order-num">{order.order_number}</strong>
@@ -1481,7 +1676,7 @@ export default function ShopDashboard({ apiUrl }) {
 
                       {/* Order Date & Time Row */}
                       <div className="ps-card-time-row">
-                        <span className="ps-card-time-icon">🕒</span>
+                        <span className="ps-card-time-icon"><ClockIcon size={12} strokeWidth={1.6} /></span>
                         <span className="ps-card-time-text">{formatCardDate(order.created_at)}</span>
                         {status === "COLLECTED" && order.collected_at && (
                           <span className="ps-card-collected-time">• Handed over: {formatCardDate(order.collected_at)}</span>
@@ -1532,9 +1727,9 @@ export default function ShopDashboard({ apiUrl }) {
                             type="button"
                             className="ps-btn-verify-ready"
                             disabled={isBusy}
-                            onClick={() => act(order.order_number, "ready")}
+                            onClick={() => act(orderKey, "ready")}
                           >
-                            {isBusy ? "Updating..." : "✓ Verified, Ready for Pickup"}
+                            {isBusy ? "Updating..." : <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><CheckIcon size={11} strokeWidth={1.75} /> Verified, Ready for Pickup</span>}
                           </button>
                         )}
 
@@ -1544,23 +1739,25 @@ export default function ShopDashboard({ apiUrl }) {
                             <div className="ps-handover-input-row">
                               <input
                                 type="text"
-                                maxLength={8}
-                                placeholder="Code"
-                                value={codes[order.order_number] || ""}
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                maxLength={4}
+                                placeholder="4 digits"
+                                value={codes[orderKey] || ""}
                                 onChange={(e) =>
                                   setCodes((prev) => ({
                                     ...prev,
-                                    [order.order_number]: e.target.value.toUpperCase(),
+                                    [orderKey]: e.target.value.replace(/\D/g, "").slice(0, 4),
                                   }))
                                 }
                               />
                               <button
                                 type="button"
                                 className="ps-btn-handover"
-                                disabled={isBusy || !(codes[order.order_number] || "").trim()}
+                                disabled={isBusy || !(codes[orderKey] || "").trim()}
                                 onClick={() =>
-                                  act(order.order_number, "handover", {
-                                    pickup_code: codes[order.order_number] || "",
+                                  act(orderKey, "handover", {
+                                    pickup_code: codes[orderKey] || "",
                                   })
                                 }
                               >
@@ -1575,22 +1772,44 @@ export default function ShopDashboard({ apiUrl }) {
                             type="button"
                             className="ps-btn-retry"
                             disabled={isBusy}
-                            onClick={() => act(order.order_number, "retry")}
+                            onClick={() => act(orderKey, "retry")}
                           >
-                            {isBusy ? "Retrying..." : "🔄 Retry Print"}
+                            {isBusy ? "Retrying..." : <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><RefreshIcon size={13} strokeWidth={1.8} /> Retry Print</span>}
                           </button>
                         )}
 
                         {status === "QUEUED" && (
-                          <span className="ps-waiting-note">⚡ Waiting for printer...</span>
+                          <button
+                            type="button"
+                            className="ps-btn-primary"
+                            style={{
+                              width: "100%",
+                              padding: "8px 10px",
+                              fontSize: "0.82rem",
+                              fontWeight: 700,
+                              borderRadius: "var(--radius-sm)",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 5,
+                            }}
+                            disabled={isBusy}
+                            onClick={() => act(orderKey, "print")}
+                          >
+                            {isBusy ? "Sending to printer..." : (
+                              <>
+                                <PrinterIcon size={13} strokeWidth={1.8} /> Print Document
+                              </>
+                            )}
+                          </button>
                         )}
 
                         {status === "PRINTING" && (
-                          <span className="ps-waiting-note blue">🖨️ Printing in progress...</span>
+                          <span className="ps-waiting-note blue" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><PrinterIcon size={11} strokeWidth={1.5} /> Printing in progress...</span>
                         )}
 
                         {status === "COLLECTED" && (
-                          <span className="ps-collected-tag">✓ Completed &amp; Collected</span>
+                          <span className="ps-collected-tag" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><CheckCircleIcon size={11} strokeWidth={1.5} /> Completed &amp; Collected</span>
                         )}
                       </div>
                     </div>
@@ -1606,211 +1825,310 @@ export default function ShopDashboard({ apiUrl }) {
       {showPrinterModal && (
         <div className="ps-modal-backdrop" onClick={() => !savingPrinters && setShowPrinterModal(false)}>
           <div className="ps-modal-card ps-printer-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="ps-modal-header">
-              <div className="ps-status-modal-title">
-                <div className="ps-status-modal-icon" style={{ background: "#eff6ff", color: "#2563eb" }}>🖨️</div>
+            {/* 1. Header */}
+            <div className="ps-printer-modal-header">
+              <div className="ps-printer-header-left">
+                <div className="ps-printer-modal-icon">
+                  <PrinterIcon size={20} strokeWidth={1.8} />
+                </div>
                 <div>
-                  <h3 style={{ margin: 0 }}>Printer Setup & Routing</h3>
-                  <p className="ps-status-modal-sub" style={{ margin: "4px 0 0" }}>
-                    Configure which connected USB or Wi-Fi printer prints Black & White vs. Color documents.
+                  <h3 className="ps-printer-modal-title">Printer Setup & Hardware Routing</h3>
+                  <p className="ps-printer-modal-sub">
+                    Configure which connected USB or Wi-Fi printer handles Black & White vs. Colour print jobs.
                   </p>
                 </div>
               </div>
               <button
                 type="button"
-                className="ps-modal-close"
+                className="ps-printer-modal-close-btn"
                 disabled={savingPrinters}
                 onClick={() => setShowPrinterModal(false)}
+                title="Close"
               >
-                ✕
+                <XIcon size={14} strokeWidth={2} />
               </button>
             </div>
 
-            <form onSubmit={handleSavePrinters} className="ps-printer-modal-body">
-              {printerFeedback && (
-                <div className={`ps-status-feedback-msg ${printerFeedback.startsWith("✓") ? "success" : "error"}`}>
-                  {printerFeedback}
-                </div>
-              )}
+            <form onSubmit={handleSavePrinters}>
+              <div className="ps-printer-modal-body">
+                {printerFeedback && (
+                  <div
+                    className={`ps-status-feedback-msg ${
+                      !printerFeedback.toLowerCase().includes("error") && !printerFeedback.toLowerCase().includes("failed")
+                        ? "success"
+                        : "error"
+                    }`}
+                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderRadius: 10 }}
+                  >
+                    {!printerFeedback.toLowerCase().includes("error") && !printerFeedback.toLowerCase().includes("failed") ? (
+                      <CheckIcon size={14} strokeWidth={2} />
+                    ) : (
+                      <AlertTriangleIcon size={14} strokeWidth={2} />
+                    )}
+                    <span style={{ fontWeight: 600, fontSize: "0.85rem" }}>{printerFeedback}</span>
+                  </div>
+                )}
 
-              {/* Pendrive-style filter: Only show real, physically connected & online hardware printers */}
-              {(() => {
-                const realPrinters = (detectedPrinters || []).filter(
-                  (p) =>
-                    p.is_online &&
-                    !p.connection_type?.toLowerCase().includes("virtual") &&
-                    p.badge_color !== "slate" &&
-                    p.badge_color !== "red" &&
-                    !["pdf", "onenote", "xps", "fax", "writer"].some((v) =>
-                      (p.name || "").toLowerCase().includes(v)
-                    )
-                );
-                const selectedBw = realPrinters.find((p) => p.name === bwPrinter);
-                const isBwOnline = selectedBw ? Boolean(selectedBw.is_online) : (bwPrinter ? false : true);
-                const selectedColor = realPrinters.find((p) => p.name === colorPrinter);
-                const isColorOnline = selectedColor ? Boolean(selectedColor.is_online) : (colorPrinter ? false : true);
+                {(() => {
+                  const realPrinters = (detectedPrinters || []).filter(
+                    (p) =>
+                      p.is_online &&
+                      !p.connection_type?.toLowerCase().includes("virtual") &&
+                      p.badge_color !== "slate" &&
+                      p.badge_color !== "red" &&
+                      !["pdf", "onenote", "xps", "fax", "writer"].some((v) =>
+                        (p.name || "").toLowerCase().includes(v)
+                      )
+                  );
+                  const selectedBw = realPrinters.find((p) => p.name === bwPrinter);
+                  const isBwOnline = selectedBw ? Boolean(selectedBw.is_online) : bwPrinter ? false : true;
+                  const selectedColor = realPrinters.find((p) => p.name === colorPrinter);
+                  const isColorOnline = selectedColor ? Boolean(selectedColor.is_online) : colorPrinter ? false : true;
 
-                return (
-                  <>
-                    {/* Detected Printers Section */}
-                    <div className="ps-printer-section">
-                      <div className="ps-printer-section-header">
-                        <strong>Connected Devices Detected ({realPrinters.length})</strong>
-                        <button
-                          type="button"
-                          className="ps-printer-refresh-btn"
-                          disabled={loadingPrinters}
-                          onClick={() => loadPrinters(true)}
-                        >
-                          {loadingPrinters ? "Scanning..." : "🔄 Refresh Devices"}
-                        </button>
-                      </div>
+                  return (
+                    <>
+                      {/* Section A: Hardware Status / Detected Devices */}
+                      <div className="ps-printer-section">
+                        <div className="ps-printer-section-header">
+                          <div className="ps-printer-section-title-wrap">
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                              <span
+                                className="ps-printer-pulse-dot"
+                                style={{
+                                  background: realPrinters.length > 0 ? "#10b981" : "#f59e0b",
+                                  boxShadow: realPrinters.length > 0 ? "0 0 0 3px rgba(16, 185, 129, 0.2)" : "none",
+                                }}
+                              />
+                              Hardware Devices
+                            </span>
+                            <span className={`ps-printer-live-badge ${realPrinters.length > 0 ? "online" : "searching"}`}>
+                              {realPrinters.length > 0 ? `${realPrinters.length} Connected` : "0 Detected"}
+                            </span>
+                          </div>
 
-                      {loadingPrinters && realPrinters.length === 0 ? (
-                        <div className="ps-printer-loading">
-                          <div className="ps-spinner" />
-                          <span>Detecting connected USB and Wi-Fi printers...</span>
+                          <button
+                            type="button"
+                            className="ps-printer-refresh-btn"
+                            disabled={loadingPrinters}
+                            onClick={() => loadPrinters(true)}
+                          >
+                            <RefreshIcon size={12} strokeWidth={1.8} className={loadingPrinters ? "ps-spin" : ""} />
+                            <span>{loadingPrinters ? "Scanning..." : "Refresh Devices"}</span>
+                          </button>
                         </div>
-                      ) : realPrinters.length === 0 ? (
-                        <div className="ps-printer-empty">
-                          <span>🔌 No physical printers connected. Please connect your USB cable or connect via Wi-Fi.</span>
-                        </div>
-                      ) : (
-                        <div className="ps-printer-list">
-                          {realPrinters.map((p, idx) => (
-                            <div key={idx} className="ps-printer-device-card green">
-                              <div className="ps-printer-device-info">
-                                <div className="ps-printer-device-title-row">
-                                  <span className="ps-printer-device-name">🖨️ {p.name}</span>
-                                  <span className="ps-printer-status-pill green">
-                                    <span className="ps-printer-pulse-dot green" />
-                                    {p.status_text || "Connected & Ready"}
+
+                        {loadingPrinters && realPrinters.length === 0 ? (
+                          <div className="ps-printer-empty-box">
+                            <div className="ps-spinner" style={{ width: 28, height: 28 }} />
+                            <p className="ps-printer-empty-text-main" style={{ marginTop: 8 }}>
+                              Scanning for connected USB & Wi-Fi printers...
+                            </p>
+                          </div>
+                        ) : realPrinters.length === 0 ? (
+                          <div className="ps-printer-empty-box">
+                            <div className="ps-printer-empty-icon">
+                              <PrinterIcon size={20} strokeWidth={1.6} />
+                            </div>
+                            <p className="ps-printer-empty-text-main">No Physical Hardware Printers Detected</p>
+                            <p className="ps-printer-empty-text-sub">
+                              Please plug in your printer's USB cable or connect the printer to your local Wi-Fi network. Then click "Refresh Devices".
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="ps-printer-list">
+                            {realPrinters.map((p, idx) => (
+                              <div key={idx} className="ps-printer-device-card">
+                                <div className="ps-printer-device-info">
+                                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                    <PrinterIcon size={14} strokeWidth={1.75} color="#2563eb" />
+                                    <span className="ps-printer-device-name">{p.name}</span>
+                                  </div>
+                                  <span className="ps-printer-device-port">
+                                    Port: {p.port || "Standard USB/Network"} • {p.connection_type}
                                   </span>
                                 </div>
-                                <span className="ps-printer-device-port">Port: {p.port || "Standard"} • {p.connection_type}</span>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                  <span className={`ps-printer-conn-tag ${p.connection_type.toLowerCase().includes("usb") ? "usb" : "wifi"}`}>
+                                    {p.connection_type.includes("USB") ? "USB Cable" : "Wi-Fi"}
+                                  </span>
+                                  <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#059669", background: "#ecfdf5", border: "1px solid #a7f3d0", padding: "2px 8px", borderRadius: 8 }}>
+                                    ● Ready
+                                  </span>
+                                </div>
                               </div>
-                              <span className={`ps-printer-conn-tag ${p.connection_type.toLowerCase().includes("usb") ? "usb" : "wifi"}`}>
-                                {p.connection_type.includes("USB") ? "🔌 USB" : "📶 Wi-Fi"}
-                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Section B: Dedicated Printer Routing */}
+                      <div className="ps-printer-config-grid">
+                        {/* 1. Black & White Printer */}
+                        <div className="ps-printer-routing-card">
+                          <div className="ps-printer-routing-header">
+                            <div className="ps-printer-routing-title-wrap">
+                              <div className="ps-printer-type-icon mono">
+                                <MonochromeIcon size={15} strokeWidth={1.8} />
+                              </div>
+                              <div>
+                                <h4 className="ps-printer-routing-title">Black & White (B&W) Printer</h4>
+                                <p className="ps-printer-routing-desc">Standard documents, assignments, xerox, and mono print jobs</p>
+                              </div>
                             </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Assignment Form */}
-                    <div className="ps-printer-config-grid">
-                      {/* B&W Printer */}
-                      <div className="ps-printer-field-card">
-                        <div className="ps-printer-field-header">
-                          <div>
-                            <span className="ps-printer-field-title">⚫ Black & White (B&W) Printer</span>
-                            <p className="ps-printer-field-desc">Used for standard documents, Xerox, and mono print jobs</p>
+                            <span className="ps-printer-routing-tag">Default Mono</span>
                           </div>
-                        </div>
-                        <div className="ps-printer-field-inputs">
-                          <select
-                            className="ps-input"
-                            value={bwPrinter}
-                            onChange={(e) => setBwPrinter(e.target.value)}
-                          >
-                            {detectedPrinters.length === 0 ? (
-                              <option value="">-- No Physical Printers Installed --</option>
-                            ) : (
-                              <>
-                                <option value="">-- Auto-Detect Default Windows Printer --</option>
-                                {detectedPrinters.map((p, i) => (
-                                  <option key={i} value={p.name}>
-                                    {p.is_online ? "🟢" : "🔴"} {p.name} ({p.connection_type}) • {p.is_online ? "Ready" : "Disconnected"}
-                                  </option>
-                                ))}
-                              </>
-                            )}
-                          </select>
-                          <button
-                            type="button"
-                            className="ps-btn-test-print"
-                            disabled={!bwPrinter || testingPrinter === "bw" || realPrinters.length === 0 || !isBwOnline}
-                            onClick={() => handleTestPrint(bwPrinter, "bw")}
-                            title={realPrinters.length === 0 ? "No printer connected" : !bwPrinter ? "Select a printer first" : "Send test print"}
-                          >
-                            {testingPrinter === "bw" ? "Printing..." : "Test B&W 🖨️"}
-                          </button>
-                        </div>
-                        {bwPrinter && !isBwOnline && (
-                          <p className="ps-printer-warning-hint">
-                            ⚠️ Selected printer is currently disconnected. Connect USB cable to test.
-                          </p>
-                        )}
-                      </div>
 
-                      {/* Color Printer */}
-                      <div className="ps-printer-field-card">
-                        <div className="ps-printer-field-header">
-                          <div>
-                            <span className="ps-printer-field-title">🎨 Color & Photo Printer</span>
-                            <p className="ps-printer-field-desc">Used for colour brochures, presentations, and photo paper</p>
+                          <div className="ps-printer-field-inputs">
+                            <select
+                              value={bwPrinter}
+                              onChange={(e) => setBwPrinter(e.target.value)}
+                            >
+                              {detectedPrinters.length === 0 ? (
+                                <option value="">-- No Hardware Printers Detected --</option>
+                              ) : (
+                                <>
+                                  <option value="">-- Auto-Detect Default Windows Printer --</option>
+                                  {detectedPrinters.map((p, i) => (
+                                    <option key={i} value={p.name}>
+                                      {p.is_online ? "●" : "○"} {p.name} ({p.connection_type}) • {p.is_online ? "Online & Ready" : "Disconnected"}
+                                    </option>
+                                  ))}
+                                </>
+                              )}
+                            </select>
+
+                            <button
+                              type="button"
+                              className="ps-btn-test-print"
+                              disabled={!bwPrinter || testingPrinter === "bw" || realPrinters.length === 0 || !isBwOnline}
+                              onClick={() => handleTestPrint(bwPrinter, "bw")}
+                              title={
+                                realPrinters.length === 0
+                                  ? "No physical printer connected"
+                                  : !bwPrinter
+                                  ? "Select a printer first"
+                                  : "Send a 1-page test sheet"
+                              }
+                            >
+                              <PrinterIcon size={13} strokeWidth={1.75} />
+                              <span>{testingPrinter === "bw" ? "Printing..." : "Test Print"}</span>
+                            </button>
                           </div>
-                        </div>
-                        <div className="ps-printer-field-inputs">
-                          <select
-                            className="ps-input"
-                            value={colorPrinter}
-                            onChange={(e) => setColorPrinter(e.target.value)}
-                          >
-                            {detectedPrinters.length === 0 ? (
-                              <option value="">-- No Physical Printers Installed --</option>
-                            ) : (
-                              <>
-                                <option value="">-- Same as B&W / Default Printer --</option>
-                                {detectedPrinters.map((p, i) => (
-                                  <option key={i} value={p.name}>
-                                    {p.is_online ? "🟢" : "🔴"} {p.name} ({p.connection_type}) • {p.is_online ? "Ready" : "Disconnected"}
-                                  </option>
-                                ))}
-                              </>
-                            )}
-                          </select>
-                          <button
-                            type="button"
-                            className="ps-btn-test-print"
-                            disabled={!colorPrinter || testingPrinter === "color" || realPrinters.length === 0 || !isColorOnline}
-                            onClick={() => handleTestPrint(colorPrinter, "color")}
-                            title={realPrinters.length === 0 ? "No printer connected" : !colorPrinter ? "Select a printer first" : "Send test print"}
-                          >
-                            {testingPrinter === "color" ? "Printing..." : "Test Color 🎨"}
-                          </button>
-                        </div>
-                        {colorPrinter && !isColorOnline && (
-                          <p className="ps-printer-warning-hint">
-                            ⚠️ Selected printer is currently disconnected. Connect USB cable to test.
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </>
-                );
-              })()}
 
-              {/* Auto Print Toggle */}
-              <div className="ps-printer-toggle-box">
-                <label className="ps-printer-toggle-label">
-                  <input
-                    type="checkbox"
-                    checked={autoPrint}
-                    onChange={(e) => setAutoPrint(e.target.checked)}
-                    className="ps-printer-checkbox"
-                  />
-                  <div>
-                    <strong>⚡ Automatic Silent Printing</strong>
-                    <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "var(--text-muted)" }}>
-                      Automatically send new orders directly to the designated printer when customer payment is verified.
+                          {bwPrinter && !isBwOnline ? (
+                            <div className="ps-printer-alert-box warning">
+                              <AlertTriangleIcon size={14} color="#b45309" />
+                              <span>This selected printer is offline or disconnected. Re-connect USB cable to test.</span>
+                            </div>
+                          ) : bwPrinter && isBwOnline ? (
+                            <div className="ps-printer-alert-box ready">
+                              <CheckIcon size={14} color="#059669" />
+                              <span>Printer is online, hardware connected, and ready for jobs.</span>
+                            </div>
+                          ) : null}
+                        </div>
+
+                        {/* 2. Color & Photo Printer */}
+                        <div className="ps-printer-routing-card">
+                          <div className="ps-printer-routing-header">
+                            <div className="ps-printer-routing-title-wrap">
+                              <div className="ps-printer-type-icon color">
+                                <PaletteIcon size={15} strokeWidth={1.8} />
+                              </div>
+                              <div>
+                                <h4 className="ps-printer-routing-title">Colour & Photo Printer</h4>
+                                <p className="ps-printer-routing-desc">Colour presentations, brochures, certificates, and photo paper</p>
+                              </div>
+                            </div>
+                            <span className="ps-printer-routing-tag">Colour Jobs</span>
+                          </div>
+
+                          <div className="ps-printer-field-inputs">
+                            <select
+                              value={colorPrinter}
+                              onChange={(e) => setColorPrinter(e.target.value)}
+                            >
+                              {detectedPrinters.length === 0 ? (
+                                <option value="">-- No Hardware Printers Detected --</option>
+                              ) : (
+                                <>
+                                  <option value="">-- Same as B&W / Default Printer --</option>
+                                  {detectedPrinters.map((p, i) => (
+                                    <option key={i} value={p.name}>
+                                      {p.is_online ? "●" : "○"} {p.name} ({p.connection_type}) • {p.is_online ? "Online & Ready" : "Disconnected"}
+                                    </option>
+                                  ))}
+                                </>
+                              )}
+                            </select>
+
+                            <button
+                              type="button"
+                              className="ps-btn-test-print"
+                              disabled={!colorPrinter || testingPrinter === "color" || realPrinters.length === 0 || !isColorOnline}
+                              onClick={() => handleTestPrint(colorPrinter, "color")}
+                              title={
+                                realPrinters.length === 0
+                                  ? "No physical printer connected"
+                                  : !colorPrinter
+                                  ? "Select a printer first"
+                                  : "Send a colour test sheet"
+                              }
+                            >
+                              <PaletteIcon size={13} strokeWidth={1.75} />
+                              <span>{testingPrinter === "color" ? "Printing..." : "Test Color"}</span>
+                            </button>
+                          </div>
+
+                          {colorPrinter && !isColorOnline ? (
+                            <div className="ps-printer-alert-box warning">
+                              <AlertTriangleIcon size={14} color="#b45309" />
+                              <span>This colour printer is offline or disconnected. Re-connect USB cable to test.</span>
+                            </div>
+                          ) : colorPrinter && isColorOnline ? (
+                            <div className="ps-printer-alert-box ready">
+                              <CheckIcon size={14} color="#059669" />
+                              <span>Colour printer is online and ready for jobs.</span>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
+
+                {/* Section C: Automatic Silent Printing Modern Toggle Switch */}
+                <div
+                  className={`ps-printer-toggle-card ${autoPrint ? "active" : ""}`}
+                  onClick={() => setAutoPrint(!autoPrint)}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <div className="ps-printer-toggle-left">
+                    <div className="ps-printer-toggle-title-row">
+                      <div className={`ps-printer-toggle-icon ${autoPrint ? "active" : "inactive"}`}>
+                        <LightningIcon size={16} strokeWidth={2} />
+                      </div>
+                      <span className="ps-printer-toggle-title">Automatic Silent Printing</span>
+                      <span className={`ps-printer-toggle-badge ${autoPrint ? "active" : "inactive"}`}>
+                        {autoPrint ? "AUTO PRINT (ON)" : "MANUAL (RECOMMENDED)"}
+                      </span>
+                    </div>
+                    <p className="ps-printer-toggle-desc">
+                      {autoPrint
+                        ? "Automatic Mode (ON): When a customer pays, their document prints straight to the hardware printer immediately."
+                        : "Manual Mode (OFF - Recommended): New orders wait in the queue with a 'Print Document' button. Print one-by-one to prevent pages mixing up in the tray."}
                     </p>
                   </div>
-                </label>
+
+                  <div className={`ps-switch-track ${autoPrint ? "active" : ""}`} style={{ flexShrink: 0 }}>
+                    <div className="ps-switch-thumb" />
+                  </div>
+                </div>
               </div>
 
-              <div className="ps-modal-actions" style={{ padding: "16px 24px", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+              {/* Modal Footer */}
+              <div className="ps-printer-modal-footer">
                 <button
                   type="button"
                   className="ps-btn-secondary"
@@ -1824,7 +2142,8 @@ export default function ShopDashboard({ apiUrl }) {
                   className="ps-btn-primary"
                   disabled={savingPrinters}
                 >
-                  {savingPrinters ? "Saving Setup..." : "Save Printer Setup"}
+                  <CheckIcon size={13} strokeWidth={2} />
+                  <span>{savingPrinters ? "Saving Setup..." : "Save Printer Setup"}</span>
                 </button>
               </div>
             </form>
@@ -1836,39 +2155,72 @@ export default function ShopDashboard({ apiUrl }) {
       {showSlipModal && (
         <div className="ps-modal-backdrop" onClick={() => !savingSlip && setShowSlipModal(false)}>
           <div className="ps-modal-card ps-slip-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="ps-modal-header">
-              <div className="ps-status-modal-title">
-                <div className="ps-status-modal-icon" style={{ background: "#e0e7ff", color: "#4338ca" }}>🧾</div>
+            <div className="ps-slip-modal-header">
+              <div className="ps-slip-header-left">
+                <div className="ps-slip-modal-icon">
+                  <ReceiptIcon size={20} strokeWidth={1.75} />
+                </div>
                 <div>
-                  <h3 style={{ margin: 0 }}>Order Slip & Shop Advertisement</h3>
-                  <p className="ps-status-modal-sub" style={{ margin: "4px 0 0" }}>
+                  <h3 className="ps-slip-modal-title">Order Slip & Shop Advertisement</h3>
+                  <p className="ps-slip-modal-sub">
                     Configure what prints on the front slip of customer documents. Auto-generated customer info is protected.
                   </p>
                 </div>
               </div>
               <button
                 type="button"
-                className="ps-modal-close"
+                className="ps-slip-modal-close-btn"
                 disabled={savingSlip}
                 onClick={() => setShowSlipModal(false)}
+                title="Close"
               >
-                ✕
+                <XIcon size={16} strokeWidth={1.75} />
               </button>
             </div>
 
             {slipFeedback && (
-              <div className={`ps-slip-feedback-strip ${slipFeedback.startsWith("✓") ? "success" : "warning"}`}>
-                {slipFeedback}
+              <div className={`ps-slip-feedback-strip ${(!slipFeedback.toLowerCase().includes("error") && !slipFeedback.toLowerCase().includes("failed")) ? "success" : "warning"}`} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                {(!slipFeedback.toLowerCase().includes("error") && !slipFeedback.toLowerCase().includes("failed")) ? <CheckIcon size={11} strokeWidth={1.75} /> : <AlertTriangleIcon size={11} strokeWidth={1.65} />}
+                <span>{slipFeedback}</span>
               </div>
             )}
 
             <div className="ps-slip-modal-layout">
               {/* Left Column: Form Controls */}
               <form className="ps-slip-form-col" onSubmit={handleSaveSlipConfig}>
+                <div className="ps-slip-form-scroll">
+                {/* 1. Main Modern Toggle: Enable / Disable Extra Page */}
+                <div
+                  className={`ps-toggle-card ${slipConfig.is_enabled ? "active" : ""}`}
+                  onClick={() => setSlipConfig({ ...slipConfig, is_enabled: !slipConfig.is_enabled })}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <div className="ps-toggle-info">
+                    <div className="ps-toggle-header">
+                      <span className="ps-toggle-title" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <DocumentIcon size={14} strokeWidth={1.8} color={slipConfig.is_enabled ? "#10b981" : "#64748b"} />
+                        Print Extra Cover Slip Page
+                      </span>
+                      <span className={`ps-toggle-badge ${slipConfig.is_enabled ? "on" : "off"}`}>
+                        {slipConfig.is_enabled ? "ON" : "OFF"}
+                      </span>
+                    </div>
+                    <p className="ps-toggle-desc">
+                      {slipConfig.is_enabled
+                        ? "Active (ON): An extra A4 advertisement & order identification slip is printed before each customer file."
+                        : "Disabled (OFF - Recommended): Saves 1 extra page per order (0% paper waste). Orders print directly without any cover page."}
+                    </p>
+                  </div>
+                  <div className={`ps-switch-track ${slipConfig.is_enabled ? "active" : ""}`}>
+                    <div className="ps-switch-thumb" />
+                  </div>
+                </div>
+
                 <div className="ps-slip-section-card">
                   <div className="ps-slip-card-head">
                     <div className="ps-slip-card-head-title">
-                      <span className="ps-slip-card-icon">🖼️</span>
+                      <span className="ps-slip-card-icon"><ImageIcon size={14} strokeWidth={1.65} /></span>
                       <div>
                         <h4 className="ps-slip-section-title">Shop Logo or Advertisement Banner</h4>
                         <p className="ps-slip-section-desc">Appears in the header and receipt banner of every customer print job.</p>
@@ -1890,7 +2242,7 @@ export default function ShopDashboard({ apiUrl }) {
                           }}
                         />
                         <div className="ps-slip-logo-fallback" style={{ display: "none" }}>
-                          <span>🖼️ Logo Uploaded</span>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><ImageIcon size={12} strokeWidth={1.65} /> Logo Uploaded</span>
                         </div>
                       </div>
                       <div className="ps-slip-logo-meta">
@@ -1917,9 +2269,7 @@ export default function ShopDashboard({ apiUrl }) {
                           className="ps-slip-logo-remove-btn"
                           onClick={handleDeleteLogo}
                           title="Remove this logo"
-                        >
-                          ✕ Remove
-                        </button>
+                         style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><XIcon size={10} strokeWidth={1.75} /> Remove</button>
                       </div>
                     </div>
                   ) : (
@@ -1936,7 +2286,7 @@ export default function ShopDashboard({ apiUrl }) {
                         }}
                       />
                       <label htmlFor="slip-logo-input" className="ps-slip-upload-label">
-                        <div className="ps-slip-upload-icon">📁</div>
+                        <div className="ps-slip-upload-icon"><FolderIcon size={16} color="var(--primary-blue)" strokeWidth={1.65} /></div>
                         <div className="ps-slip-upload-text">
                           <span className="ps-slip-upload-main">
                             {uploadingLogo ? "Uploading..." : "Click to Upload Shop Logo"}
@@ -1951,7 +2301,7 @@ export default function ShopDashboard({ apiUrl }) {
                 <div className="ps-slip-section-card">
                   <div className="ps-slip-card-head">
                     <div className="ps-slip-card-head-title">
-                      <span className="ps-slip-card-icon">📢</span>
+                      <span className="ps-slip-card-icon"><MegaphoneIcon size={14} strokeWidth={1.65} /></span>
                       <div>
                         <h4 className="ps-slip-section-title">Shop Branding & Tagline</h4>
                         <p className="ps-slip-section-desc">Displayed at the top of your slip for store identity and recognition.</p>
@@ -1997,7 +2347,7 @@ export default function ShopDashboard({ apiUrl }) {
                 <div className="ps-slip-section-card">
                   <div className="ps-slip-card-head">
                     <div className="ps-slip-card-head-title">
-                      <span className="ps-slip-card-icon">⭐</span>
+                      <span className="ps-slip-card-icon"><StarIcon size={14} strokeWidth={1.65} /></span>
                       <div>
                         <h4 className="ps-slip-section-title">Services & Promotional Message</h4>
                         <p className="ps-slip-section-desc">Promote your other counter services to customers.</p>
@@ -2040,7 +2390,7 @@ export default function ShopDashboard({ apiUrl }) {
                 <div className="ps-slip-section-card">
                   <div className="ps-slip-card-head">
                     <div className="ps-slip-card-head-title">
-                      <span className="ps-slip-card-icon">📞</span>
+                      <span className="ps-slip-card-icon"><PhoneIcon size={14} strokeWidth={1.65} /></span>
                       <div>
                         <h4 className="ps-slip-section-title">Counter Contact & Location</h4>
                         <p className="ps-slip-section-desc">Make it effortless for customers to find your counter and call you.</p>
@@ -2110,7 +2460,7 @@ export default function ShopDashboard({ apiUrl }) {
                       </div>
                       <div className="ps-slip-qr-toggle-body">
                         <div className="ps-slip-qr-toggle-title">
-                          <span>📱 Include Counter QR Code on Slip</span>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><QrCodeIcon size={13} strokeWidth={1.65} /> Include Counter QR Code on Slip</span>
                           <span className={`ps-slip-badge-status ${slipConfig.show_qr_code ? "active" : ""}`}>
                             {slipConfig.show_qr_code ? "Enabled" : "Disabled"}
                           </span>
@@ -2121,6 +2471,7 @@ export default function ShopDashboard({ apiUrl }) {
                       </div>
                     </div>
                   </div>
+                </div>
                 </div>
 
                 <div className="ps-slip-form-actions">
@@ -2137,7 +2488,7 @@ export default function ShopDashboard({ apiUrl }) {
                     className="ps-btn-slip-save"
                     disabled={savingSlip}
                   >
-                    {savingSlip ? "Saving Changes..." : "💾 Save Advertisement Settings"}
+                    {savingSlip ? "Saving Changes..." : <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><SaveIcon size={14} strokeWidth={1.75} /> Save Advertisement Settings</span>}
                   </button>
                 </div>
               </form>
@@ -2156,7 +2507,7 @@ export default function ShopDashboard({ apiUrl }) {
                     disabled={previewingPdf}
                     title="Generate and view exact printable PDF in new tab"
                   >
-                    {previewingPdf ? "Generating..." : "📄 View PDF Slip ↗"}
+                    {previewingPdf ? "Generating..." : <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><DocumentIcon size={11} strokeWidth={1.6} /> View PDF Slip ↗</span>}
                   </button>
                 </div>
 
@@ -2181,7 +2532,7 @@ export default function ShopDashboard({ apiUrl }) {
                         </div>
                       </div>
                       <div className="ps-live-slip-badge">
-                        <strong className="ps-live-order-badge">ORDER #PS-10001</strong>
+                        <strong className="ps-live-order-badge">ORDER #ORD-001</strong>
                         <div className="ps-live-order-time">Today, {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                       </div>
                     </div>
@@ -2189,8 +2540,8 @@ export default function ShopDashboard({ apiUrl }) {
                     {/* Customer Info Card (Protected) */}
                     <div className="ps-live-cust-card">
                       <div className="ps-live-cust-card-title">
-                        <span>🔒 CUSTOMER & ORDER SPECIFICATIONS</span>
-                        <span className="ps-live-paid-tag">✓ PAID ONLINE</span>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><LockIcon size={10} strokeWidth={1.6} /> CUSTOMER & ORDER SPECIFICATIONS</span>
+                        <span className="ps-live-paid-tag" style={{ display: "inline-flex", alignItems: "center", gap: 3 }}><CheckIcon size={10} strokeWidth={1.75} /> PAID ONLINE</span>
                       </div>
                       <div className="ps-live-cust-grid">
                         <div>
@@ -2217,7 +2568,7 @@ export default function ShopDashboard({ apiUrl }) {
 
                       {slipConfig.offers_badge && (
                         <div className="ps-live-offers-banner">
-                          ⚡ {slipConfig.offers_badge}
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><LightningIcon size={11} strokeWidth={1.6} /> {slipConfig.offers_badge}</span>
                         </div>
                       )}
 
@@ -2233,9 +2584,9 @@ export default function ShopDashboard({ apiUrl }) {
                       <div className="ps-live-footer-row">
                         <div className="ps-live-contact-box">
                           <strong className="ps-live-contact-title">STORE CONTACT & PICKUP LOCATION:</strong>
-                          <div>📞 Phone / WhatsApp: <strong>{slipConfig.contact_phone || "+91 98765 43210"}</strong></div>
-                          <div>📍 Counter: <strong>{slipConfig.counter_address || "Ground Floor Counter"}</strong></div>
-                          {slipConfig.contact_email && <div>✉️ Email: {slipConfig.contact_email}</div>}
+                          <div>Phone / WhatsApp: <strong>{slipConfig.contact_phone || "+91 98765 43210"}</strong></div>
+                          <div>Counter: <strong>{slipConfig.counter_address || "Ground Floor Counter"}</strong></div>
+                          {slipConfig.contact_email && <div>Email: {slipConfig.contact_email}</div>}
                         </div>
 
                         {slipConfig.show_qr_code && (
@@ -2264,13 +2615,15 @@ export default function ShopDashboard({ apiUrl }) {
         </div>
       )}
 
-      {/* 💰 CUSTOM PRINT PRICING MODAL */}
+      {/* CUSTOM PRINT PRICING MODAL */}
       {showPricingModal && (
         <div className="ps-modal-backdrop" onClick={() => !savingPricing && setShowPricingModal(false)}>
           <div className="ps-modal-card ps-pricing-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520, borderRadius: 16 }}>
             <div className="ps-modal-header" style={{ borderBottom: "1px solid #e2e8f0", padding: "16px 20px" }}>
               <div className="ps-status-modal-title" style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: "#fef3c7", color: "#b45309", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.3rem" }}>💰</div>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: "#fef3c7", color: "#b45309", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <TagIcon size={16} strokeWidth={1.65} />
+                </div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "#0f172a" }}>Print Pricing & Rates</h3>
                   <p style={{ margin: "3px 0 0", color: "#64748b", fontSize: "0.83rem" }}>
@@ -2283,9 +2636,9 @@ export default function ShopDashboard({ apiUrl }) {
                 className="ps-modal-close"
                 disabled={savingPricing}
                 onClick={() => setShowPricingModal(false)}
-                style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "#64748b" }}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b", display: "flex", alignItems: "center" }}
               >
-                ✕
+                <XIcon size={13} strokeWidth={1.75} />
               </button>
             </div>
 
@@ -2298,12 +2651,16 @@ export default function ShopDashboard({ apiUrl }) {
                     marginBottom: 16,
                     fontSize: "0.88rem",
                     fontWeight: 600,
-                    background: pricingFeedback.startsWith("✓") ? "#ecfdf5" : "#fef2f2",
-                    color: pricingFeedback.startsWith("✓") ? "#065f46" : "#b91c1c",
-                    border: `1px solid ${pricingFeedback.startsWith("✓") ? "#a7f3d0" : "#fecaca"}`,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    background: (!pricingFeedback.toLowerCase().includes("error") && !pricingFeedback.toLowerCase().includes("failed")) ? "#ecfdf5" : "#fef2f2",
+                    color: (!pricingFeedback.toLowerCase().includes("error") && !pricingFeedback.toLowerCase().includes("failed")) ? "#065f46" : "#b91c1c",
+                    border: `1px solid ${(!pricingFeedback.toLowerCase().includes("error") && !pricingFeedback.toLowerCase().includes("failed")) ? "#a7f3d0" : "#fecaca"}`,
                   }}
                 >
-                  {pricingFeedback}
+                  {(!pricingFeedback.toLowerCase().includes("error") && !pricingFeedback.toLowerCase().includes("failed")) ? <CheckIcon size={11} strokeWidth={1.75} /> : <AlertTriangleIcon size={11} strokeWidth={1.65} />}
+                  <span>{pricingFeedback}</span>
                 </div>
               )}
 
@@ -2312,7 +2669,7 @@ export default function ShopDashboard({ apiUrl }) {
                 <div style={{ background: "#f8fafc", padding: "14px 16px", borderRadius: 10, border: "1px solid #e2e8f0" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                     <label style={{ fontWeight: 700, color: "#1e293b", fontSize: "0.93rem", display: "flex", alignItems: "center", gap: 6 }}>
-                      <span>⚫</span> Black & White (B&W) Rate
+                      <MonochromeIcon size={12} style={{ marginRight: 6 }} strokeWidth={1.6} /> Black & White (B&W) Rate
                     </label>
                     <span style={{ fontSize: "0.78rem", color: "#64748b", fontWeight: 500 }}>per single page</span>
                   </div>
@@ -2347,7 +2704,7 @@ export default function ShopDashboard({ apiUrl }) {
                 <div style={{ background: "#f8fafc", padding: "14px 16px", borderRadius: 10, border: "1px solid #e2e8f0" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                     <label style={{ fontWeight: 700, color: "#1e293b", fontSize: "0.93rem", display: "flex", alignItems: "center", gap: 6 }}>
-                      <span>🎨</span> Colour Print Rate
+                      <PaletteIcon size={12} style={{ marginRight: 6 }} strokeWidth={1.6} /> Colour Print Rate
                     </label>
                     <span style={{ fontSize: "0.78rem", color: "#64748b", fontWeight: 500 }}>per single page</span>
                   </div>
@@ -2382,7 +2739,7 @@ export default function ShopDashboard({ apiUrl }) {
                 <div style={{ background: "#f8fafc", padding: "14px 16px", borderRadius: 10, border: "1px solid #e2e8f0" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                     <label style={{ fontWeight: 700, color: "#1e293b", fontSize: "0.93rem", display: "flex", alignItems: "center", gap: 6 }}>
-                      <span>📦</span> Counter Handling Fee
+                      <PackageIcon size={12} style={{ marginRight: 6 }} strokeWidth={1.6} /> Counter Handling Fee
                     </label>
                     <span style={{ fontSize: "0.78rem", color: "#64748b", fontWeight: 500 }}>per order (optional)</span>
                   </div>
@@ -2446,7 +2803,7 @@ export default function ShopDashboard({ apiUrl }) {
                     boxShadow: "0 2px 4px rgba(37,99,235,0.2)",
                   }}
                 >
-                  {savingPricing ? "Saving..." : "Save Prices ✓"}
+                  {savingPricing ? "Saving..." : <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><SaveIcon size={12} strokeWidth={1.65} /> Save Prices</span>}
                 </button>
               </div>
             </form>
@@ -2460,7 +2817,7 @@ export default function ShopDashboard({ apiUrl }) {
           <div className="ps-modal-card ps-delete-modal" onClick={(e) => e.stopPropagation()}>
             <div className="ps-modal-header danger">
               <div className="ps-status-modal-title">
-                <div className="ps-status-modal-icon danger" style={{ background: "#fee2e2", color: "#dc2626" }}>⚠️</div>
+                <div className="ps-status-modal-icon danger" style={{ background: "#fee2e2", color: "#dc2626" }}><AlertTriangleIcon size={16} strokeWidth={1.65} /></div>
                 <div>
                   <h3 style={{ color: "#dc2626", margin: 0 }}>Delete Registered Shop</h3>
                   <p className="ps-status-modal-sub" style={{ margin: "4px 0 0" }}>
@@ -2473,9 +2830,7 @@ export default function ShopDashboard({ apiUrl }) {
                 className="ps-modal-close"
                 disabled={deletingShop}
                 onClick={() => setShowDeleteModal(false)}
-              >
-                ✕
-              </button>
+              ><XIcon size={13} strokeWidth={1.75} /></button>
             </div>
 
             <div className="ps-delete-modal-body">
@@ -2535,7 +2890,7 @@ export default function ShopDashboard({ apiUrl }) {
           <div className="ps-modal-card ps-status-modal" onClick={(e) => e.stopPropagation()}>
             <div className="ps-modal-header">
               <div className="ps-status-modal-title">
-                <div className="ps-status-modal-icon">🏪</div>
+                <div className="ps-status-modal-icon"><StoreIcon size={16} strokeWidth={1.65} /></div>
                 <div>
                   <h3>Store Availability & Customer Notice</h3>
                   <p className="ps-status-modal-sub">
@@ -2543,15 +2898,14 @@ export default function ShopDashboard({ apiUrl }) {
                   </p>
                 </div>
               </div>
-              <button type="button" className="ps-modal-close" onClick={() => setShowStatusModal(false)}>
-                ✕
-              </button>
+              <button type="button" className="ps-modal-close" onClick={() => setShowStatusModal(false)}><XIcon size={13} strokeWidth={1.75} /></button>
             </div>
 
             <form onSubmit={handleSaveStatus} className="ps-status-form">
               {statusFeedback && (
-                <div className={`ps-status-feedback-msg ${statusFeedback.startsWith("✓") ? "success" : "error"}`}>
-                  {statusFeedback}
+                <div className={`ps-status-feedback-msg ${(!statusFeedback.toLowerCase().includes("error") && !statusFeedback.toLowerCase().includes("failed")) ? "success" : "error"}`} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  {(!statusFeedback.toLowerCase().includes("error") && !statusFeedback.toLowerCase().includes("failed")) ? <CheckIcon size={11} strokeWidth={1.75} /> : <AlertTriangleIcon size={11} strokeWidth={1.65} />}
+                  <span>{statusFeedback}</span>
                 </div>
               )}
 
@@ -2607,35 +2961,35 @@ export default function ShopDashboard({ apiUrl }) {
                     className="ps-preset-pill"
                     onClick={() => applyPreset("lunch")}
                   >
-                    🍱 Lunch Break (30 min)
+                    <ClockIcon size={11} style={{ marginRight: 5 }} strokeWidth={1.5} /> Lunch Break (30 min)
                   </button>
                   <button
                     type="button"
                     className="ps-preset-pill"
                     onClick={() => applyPreset("tea")}
                   >
-                    ☕ Quick Break (15 min)
+                    <CoffeeIcon size={11} style={{ marginRight: 5 }} strokeWidth={1.5} /> Quick Break (15 min)
                   </button>
                   <button
                     type="button"
                     className="ps-preset-pill"
                     onClick={() => applyPreset("busy")}
                   >
-                    🏃 Counter Rush (10 min)
+                    <ClockIcon size={11} style={{ marginRight: 5 }} strokeWidth={1.5} /> Counter Rush (10 min)
                   </button>
                   <button
                     type="button"
                     className="ps-preset-pill"
                     onClick={() => applyPreset("closed")}
                   >
-                    🌙 Closed for Today
+                    <MoonIcon size={11} style={{ marginRight: 5 }} strokeWidth={1.5} /> Closed for Today
                   </button>
                   <button
                     type="button"
                     className="ps-preset-pill open-preset"
                     onClick={() => applyPreset("open")}
                   >
-                    🟢 Re-Open Now
+                    <PlayIcon size={11} style={{ marginRight: 5 }} strokeWidth={1.5} /> Re-Open Now
                   </button>
                 </div>
               </div>
@@ -2702,9 +3056,7 @@ export default function ShopDashboard({ apiUrl }) {
           <div className="ps-modal-card ps-qr-modal" onClick={(e) => e.stopPropagation()}>
             <div className="ps-modal-header">
               <h3>Shop Counter QR Code</h3>
-              <button type="button" className="ps-modal-close" onClick={() => setShowQr(false)}>
-                ✕
-              </button>
+              <button type="button" className="ps-modal-close" onClick={() => setShowQr(false)}><XIcon size={13} strokeWidth={1.75} /></button>
             </div>
             <div className="ps-qr-content">
               <img

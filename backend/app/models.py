@@ -143,7 +143,7 @@ class Shop(Base):
     handling_charge = Column(
         Float,
         nullable=False,
-        default=5.0,
+        default=0.0,
     )
 
     created_at = Column(
@@ -232,7 +232,6 @@ class Order(Base):
 
     order_number = Column(
         String(30),
-        unique=True,
         index=True,
         nullable=False,
     )
@@ -756,6 +755,18 @@ class ShopSlipConfig(Base):
         nullable=True,
 
         default="Special Student Discount Available",
+
+    )
+
+
+
+    is_enabled = Column(
+
+        Boolean,
+
+        nullable=False,
+
+        default=False,
 
     )
 

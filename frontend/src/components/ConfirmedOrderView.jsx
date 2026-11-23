@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { CheckIcon } from "./Icons";
 
 const STEPS = [
   { key: "QUEUED", label: "Queued" },
@@ -24,6 +25,10 @@ export default function ConfirmedOrderView({ apiUrl, order, shop, onReset }) {
   const [currentOrder, setCurrentOrder] = useState(order);
   const [copiedCode, setCopiedCode] = useState(false);
 
+  useEffect(() => {
+    if (order) setCurrentOrder(order);
+  }, [order]);
+
   // Background polling for live print status
   useEffect(() => {
     if (!currentOrder?.order_number || !currentOrder?.pickup_code) return;
@@ -38,7 +43,11 @@ export default function ConfirmedOrderView({ apiUrl, order, shop, onReset }) {
         if (res.ok) {
           const data = await res.json();
           if (!cancelled && data.order) {
-            setCurrentOrder((prev) => ({ ...prev, ...data.order }));
+            setCurrentOrder((prev) => ({
+              ...prev,
+              ...data.order,
+              pickup_code: data.order.pickup_code || prev?.pickup_code || order?.pickup_code,
+            }));
           }
         }
       } catch (_) {
@@ -53,12 +62,20 @@ export default function ConfirmedOrderView({ apiUrl, order, shop, onReset }) {
     };
   }, [apiUrl, currentOrder?.order_number, currentOrder?.pickup_code, currentOrder?.order_status]);
 
+  const pickupCode = currentOrder?.pickup_code || order?.pickup_code || "";
+
   const copyPickupCode = () => {
-    if (currentOrder?.pickup_code) {
-      navigator.clipboard?.writeText(currentOrder.pickup_code);
+    if (pickupCode) {
+      navigator.clipboard?.writeText(pickupCode);
       setCopiedCode(true);
       setTimeout(() => setCopiedCode(false), 2000);
     }
+  };
+
+  const shareWhatsApp = () => {
+    if (!pickupCode) return;
+    const text = `PrintShop Order Details:\nOrder ID: ${currentOrder.order_number}\nPickup Code: ${pickupCode}\nShop: ${shopDisplayName}\nShow this 4-digit code at the counter to collect your prints!`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   const status = currentOrder?.order_status || "QUEUED";
@@ -120,7 +137,7 @@ export default function ConfirmedOrderView({ apiUrl, order, shop, onReset }) {
         </div>
         <h1 className="ps-confirmed-title">Order Placed Successfully!</h1>
         <p className="ps-confirmed-sub">
-          Order <strong>#{currentOrder.order_number}</strong> · {shopDisplayName}
+          Order ID: <strong>{currentOrder.order_number}</strong> · {shopDisplayName}
         </p>
       </div>
 
@@ -129,7 +146,7 @@ export default function ConfirmedOrderView({ apiUrl, order, shop, onReset }) {
         <div className="ps-code-card-left">
           <span className="ps-code-card-tag">SHOW THIS CODE AT THE SHOP COUNTER</span>
           <div className="ps-code-card-val-row">
-            <span className="ps-code-card-val">{currentOrder.pickup_code}</span>
+            <span className="ps-code-card-val">{pickupCode || "----"}</span>
             <button
               type="button"
               className="ps-code-card-copy-btn"
@@ -152,6 +169,17 @@ export default function ConfirmedOrderView({ apiUrl, order, shop, onReset }) {
                   <span>Copy</span>
                 </>
               )}
+            </button>
+            <button
+              type="button"
+              className="ps-code-card-wa-btn"
+              onClick={shareWhatsApp}
+              title="Share/Save Pickup Code to WhatsApp"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+              </svg>
+              <span>Save to WhatsApp</span>
             </button>
           </div>
         </div>
@@ -229,7 +257,13 @@ export default function ConfirmedOrderView({ apiUrl, order, shop, onReset }) {
         <div className="ps-metric-item">
           <span className="ps-metric-item-lbl">Payment Status</span>
           <strong className="ps-metric-item-val text-green">
-            {currentOrder.payment_status === "PAID" ? "✓ Paid Online" : "Payment Pending"}
+            {currentOrder.payment_status === "PAID" ? (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                <CheckIcon size={11} strokeWidth={1.75} /> Paid Online
+              </span>
+            ) : (
+              "Payment Pending"
+            )}
           </strong>
         </div>
 

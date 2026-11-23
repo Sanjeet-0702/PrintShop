@@ -52,6 +52,9 @@ class WorkerConfig:
     file_retention_hours: int = 24
 
 
+_current_config: WorkerConfig | None = None
+
+
 def _safe_notify(db, order, event) -> None:
     """A failed email must never break printing or payment."""
     try:
@@ -66,7 +69,9 @@ def _safe_notify(db, order, event) -> None:
 
 def start_worker(config: WorkerConfig) -> None:
 
-    global _thread
+    global _thread, _current_config
+
+    _current_config = config
 
     if _thread and _thread.is_alive():
         return
@@ -89,6 +94,57 @@ def start_worker(config: WorkerConfig) -> None:
     _thread.start()
 
     log.info("Print queue started (mode: %s)", config.print_mode)
+
+
+def print_single_order_now(db, order) -> None:
+    """Print an order immediately on-demand when the shopkeeper clicks Print Document."""
+    global _current_config
+    cfg = _current_config or WorkerConfig(print_mode="windows")
+    order_number = order.order_number
+
+    order.order_status = "PRINTING"
+    order.failure_reason = None
+    db.commit()
+    _safe_notify(db, order, "PRINTING")
+
+    try:
+        if not order.items:
+            _process_legacy_order(db, order, cfg)
+        else:
+            failures = []
+            for item in list(order.items):
+                if item.item_status == "PRINTED":
+                    continue
+                item.item_status = "PRINTING"
+                item.failure_reason = None
+                db.commit()
+                try:
+                    _print_job(item, cfg)
+                    item.item_status = "PRINTED"
+                    db.commit()
+                except Exception as err:
+                    reason = str(err).strip() or err.__class__.__name__
+                    item.item_status = "FAILED"
+                    item.failure_reason = reason[:300]
+                    db.commit()
+                    failures.append(f"{item.original_filename}: {reason}")
+            if failures:
+                order.order_status = "FAILED"
+                order.failure_reason = "; ".join(failures)[:300]
+                db.commit()
+                _safe_notify(db, order, "FAILED")
+                raise RuntimeError(order.failure_reason)
+            else:
+                order.order_status = "PRINTED"
+                order.failure_reason = None
+                db.commit()
+                _safe_notify(db, order, "PRINTED")
+    except Exception as e:
+        order.order_status = "FAILED"
+        order.failure_reason = str(e)[:300]
+        db.commit()
+        _safe_notify(db, order, "FAILED")
+        raise
 
 
 def stop_worker() -> None:
@@ -176,15 +232,25 @@ def _process_next_order(config: WorkerConfig) -> bool:
 
     with Session(engine) as db:
 
-        order = (
+        queued_orders = (
             db.query(models.Order)
             .filter(
                 models.Order.order_status == "QUEUED",
                 models.Order.payment_status == "PAID",
             )
             .order_by(models.Order.id.asc())
-            .first()
+            .all()
         )
+
+        order = None
+        for cand in queued_orders:
+            # Respect shopkeeper's auto_print_enabled setting.
+            # If disabled, orders wait for shopkeeper to click "Print Document" manually on dashboard.
+            cand_shop = cand.shop if hasattr(cand, "shop") and cand.shop else db.query(models.Shop).filter(models.Shop.id == cand.shop_id).first()
+            if cand_shop and not cand_shop.auto_print_enabled:
+                continue
+            order = cand
+            break
 
         if not order:
             return False

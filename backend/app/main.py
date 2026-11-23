@@ -69,6 +69,7 @@ from .security import (
     codes_match,
     generate_pickup_code,
 )
+from .order_utils import generate_daily_order_number
 
 
 # =========================================================
@@ -665,9 +666,9 @@ def get_all_shops(
             "is_open": bool(getattr(s, "is_open", True)),
             "status_message": getattr(s, "status_message", None),
             "back_at": getattr(s, "back_at", None),
-            "bw_rate": float(getattr(s, "bw_rate", 3.0) or 3.0),
-            "color_rate": float(getattr(s, "color_rate", 10.0) or 10.0),
-            "handling_charge": float(getattr(s, "handling_charge", 5.0) or 5.0),
+            "bw_rate": float(s.bw_rate) if getattr(s, "bw_rate", None) is not None else 3.0,
+            "color_rate": float(s.color_rate) if getattr(s, "color_rate", None) is not None else 10.0,
+            "handling_charge": float(s.handling_charge) if getattr(s, "handling_charge", None) is not None else 0.0,
         })
 
     if lat is not None and lng is not None:
@@ -733,9 +734,9 @@ def get_shop(
             "is_open": bool(getattr(shop, "is_open", True)),
             "status_message": getattr(shop, "status_message", None),
             "back_at": getattr(shop, "back_at", None),
-            "bw_rate": float(getattr(shop, "bw_rate", 3.0) or 3.0),
-            "color_rate": float(getattr(shop, "color_rate", 10.0) or 10.0),
-            "handling_charge": float(getattr(shop, "handling_charge", 5.0) or 5.0),
+            "bw_rate": float(shop.bw_rate) if getattr(shop, "bw_rate", None) is not None else 3.0,
+            "color_rate": float(shop.color_rate) if getattr(shop, "color_rate", None) is not None else 10.0,
+            "handling_charge": float(shop.handling_charge) if getattr(shop, "handling_charge", None) is not None else 0.0,
         },
     }
 
@@ -1083,13 +1084,10 @@ def create_order(
         db.add(order)
 
         # Get the database id without finishing the transaction,
-        # then build the real order number from it. This cannot
-        # produce the same number twice.
+        # then build the real order number using daily sequence.
         db.flush()
 
-        order.order_number = (
-            f"PS-{10000 + order.id}"
-        )
+        order.order_number = generate_daily_order_number(db, shop.id)
 
         db.commit()
 
@@ -1167,6 +1165,7 @@ def get_order(
             models.Order.order_number
             == order_number
         )
+        .order_by(models.Order.id.desc())
         .first()
     )
 
@@ -1197,6 +1196,9 @@ def get_order(
 
             "order_number":
                 order.order_number,
+
+            "pickup_code":
+                order.pickup_code,
 
             "original_filename":
                 order.original_filename,
@@ -1306,6 +1308,7 @@ def submit_feedback(
             models.Order.order_number
             == order_number
         )
+        .order_by(models.Order.id.desc())
         .first()
     )
 
@@ -1370,6 +1373,7 @@ def create_razorpay_order(
             models.Order.order_number
             == order_number
         )
+        .order_by(models.Order.id.desc())
         .first()
     )
 
@@ -1520,6 +1524,7 @@ def verify_razorpay_payment(
             models.Order.order_number
             == payment_data.order_number
         )
+        .order_by(models.Order.id.desc())
         .first()
     )
 

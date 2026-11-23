@@ -386,11 +386,11 @@ def generate_sample_slip_pdf(shop, cfg, frontend_url="http://localhost:5173") ->
         width=width,
         height=height,
         shop_name=shop_name,
-        ord_num="PS-10001",
+        ord_num="ORD-001",
         order_date_str=format_order_datetime(None),
         customer_name="Sanjeet Kumar",
         customer_phone="+91-9518408436",
-        pickup_code="YZ3257",
+        pickup_code="4829",
         file_summary="Project_Report.pdf (5 pages)",
         specs_summary="1 Copy - Black & White - Single-sided",
         price_str="15.00",
@@ -405,11 +405,37 @@ def generate_sample_slip_pdf(shop, cfg, frontend_url="http://localhost:5173") ->
 def _prepend_order_cover(pdf_path: str, order) -> None:
     """
     Add a customized order-identification cover & advertisement to the front of the print-ready PDF.
-    Only printed on the first file of an order to avoid unnecessary paper waste.
+    Only printed on the first file of an order when explicitly enabled by shopkeeper.
+    Default is disabled to save paper and prevent waste.
     """
     # For multi-file orders, only prepend to the first file
     item_position = getattr(order, "position", 0)
     if item_position > 0:
+        return
+
+    parent_order = getattr(order, "order", None) or order
+    shop_id = getattr(parent_order, "shop_id", None) or getattr(order, "shop_id", None)
+    if not shop_id:
+        return
+
+    shop_name = "PrintShop Store"
+    shop_link = "http://localhost:5173"
+    cfg = None
+
+    try:
+        from .database import SessionLocal
+        from . import models
+        with SessionLocal() as db_session:
+            s_rec = db_session.query(models.Shop).filter(models.Shop.id == shop_id).first()
+            if s_rec:
+                shop_name = s_rec.name
+                shop_link = f"http://localhost:5173/?shop={s_rec.slug}"
+                cfg = db_session.query(models.ShopSlipConfig).filter(models.ShopSlipConfig.shop_id == s_rec.id).first()
+    except Exception as e:
+        log.warning("Could not fetch shop slip config: %s", e)
+
+    # Check if shopkeeper enabled cover slip printing. Default is DISABLED to save paper.
+    if not cfg or not getattr(cfg, "is_enabled", False):
         return
 
     covered_path = pdf_path + ".covered.pdf"
@@ -426,10 +452,7 @@ def _prepend_order_cover(pdf_path: str, order) -> None:
 
         cover = combined.new_page(width=width, height=height)
 
-        # Resolve order, shop and slip configuration
-        parent_order = getattr(order, "order", None) or order
-        shop_id = getattr(parent_order, "shop_id", None) or getattr(order, "shop_id", None)
-        ord_num = getattr(parent_order, "order_number", None) or getattr(order, "order_number", None) or f"PS-{getattr(order, 'id', 'JOB')}"
+        ord_num = getattr(parent_order, "order_number", None) or getattr(order, "order_number", None) or f"ORD-{getattr(order, 'id', '001')}"
         c_name = getattr(parent_order, "customer_name", "") or "Customer"
         c_phone = getattr(parent_order, "customer_phone", "") or ""
         p_code = getattr(parent_order, "pickup_code", "") or "---"
@@ -446,24 +469,6 @@ def _prepend_order_cover(pdf_path: str, order) -> None:
         orig_fn = getattr(order, "original_filename", "Document")
         file_summary = f"{orig_fn} ({source.page_count} pgs)"
         specs_summary = f"{copies} Copy - {ptype} - {duplex_label}"
-
-        # Fetch shop & config from DB
-        shop_name = "PrintShop Store"
-        shop_link = "http://localhost:5173"
-        cfg = None
-
-        if shop_id:
-            try:
-                from .database import SessionLocal
-                from . import models
-                with SessionLocal() as db_session:
-                    s_rec = db_session.query(models.Shop).filter(models.Shop.id == shop_id).first()
-                    if s_rec:
-                        shop_name = s_rec.name
-                        shop_link = f"http://localhost:5173/?shop={s_rec.slug}"
-                        cfg = db_session.query(models.ShopSlipConfig).filter(models.ShopSlipConfig.shop_id == s_rec.id).first()
-            except Exception as e:
-                log.warning("Could not fetch shop slip config: %s", e)
 
         draw_order_slip(
             page=cover,

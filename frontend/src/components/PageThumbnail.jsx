@@ -1,5 +1,6 @@
 import React from "react";
 import { Document, Page } from "react-pdf";
+import { CheckIcon } from "./Icons";
 
 export default function PageThumbnail({
   file,
@@ -41,7 +42,7 @@ export default function PageThumbnail({
         </span>
 
         <span className="thumbnail-check">
-          {selected ? "✓" : ""}
+          {selected ? <CheckIcon size={10} strokeWidth={1.75} /> : null}
         </span>
 
       </div>

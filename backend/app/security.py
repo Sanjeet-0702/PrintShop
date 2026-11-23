@@ -19,8 +19,11 @@ import time
 _ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
 
-def generate_pickup_code(length: int = 6) -> str:
-    return "".join(secrets.choice(_ALPHABET) for _ in range(length))
+def generate_pickup_code(length: int = 4) -> str:
+    """
+    Generate a 4-digit purely numerical pickup code (1000-9999).
+    """
+    return f"{secrets.randbelow(9000) + 1000:04d}"
 
 
 def codes_match(

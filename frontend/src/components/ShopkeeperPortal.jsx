@@ -1,5 +1,17 @@
 import React, { useState } from "react";
 import TrackOrderModal from "./TrackOrderModal";
+import {
+  PrinterIcon,
+  RocketIcon,
+  StoreIcon,
+  SparklesIcon,
+  QrCodeIcon,
+  LightningIcon,
+  TagIcon,
+  ReceiptIcon,
+  ChartIcon,
+  ShieldCheckIcon,
+} from "./Icons";
 
 export default function ShopkeeperPortal({ apiUrl }) {
   const [showTrackModal, setShowTrackModal] = useState(false);
@@ -12,7 +24,7 @@ export default function ShopkeeperPortal({ apiUrl }) {
       <header className="ps-header">
         <div className="ps-header-inner">
           <div className="ps-brand-wrap">
-            <div className="ps-brand-icon">🖨️</div>
+            <div className="ps-brand-icon"><PrinterIcon size={18} strokeWidth={1.65} /></div>
             <div className="ps-brand-text">
               <span className="ps-brand-name">
                 Print<span className="ps-brand-highlight">Shop</span>
@@ -88,7 +100,7 @@ export default function ShopkeeperPortal({ apiUrl }) {
               border: "1px solid #bfdbfe",
             }}
           >
-            <span>🚀</span> Smart In-Store Self-Service Platform
+            <RocketIcon size={12} strokeWidth={1.6} /> Smart In-Store Self-Service Platform
           </div>
 
           <h1
@@ -145,7 +157,7 @@ export default function ShopkeeperPortal({ apiUrl }) {
                 transition: "all 0.2s ease",
               }}
             >
-              <span>🏪</span> Open Shop Dashboard
+              <StoreIcon size={14} strokeWidth={1.65} /> Open Shop Dashboard
             </a>
 
             <a
@@ -165,7 +177,7 @@ export default function ShopkeeperPortal({ apiUrl }) {
                 boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
               }}
             >
-              <span>✨</span> Register Store (Free)
+              <SparklesIcon size={14} strokeWidth={1.65} /> Register Store (Free)
             </a>
           </div>
 
@@ -195,11 +207,11 @@ export default function ShopkeeperPortal({ apiUrl }) {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "1.8rem",
+                color: "#16a34a",
                 flexShrink: 0,
               }}
             >
-              📱
+              <QrCodeIcon size={18} strokeWidth={1.65} />
             </div>
             <div style={{ flex: 1 }}>
               <strong style={{ fontSize: "1.05rem", color: "#166534", display: "block", marginBottom: 3 }}>
@@ -260,7 +272,7 @@ export default function ShopkeeperPortal({ apiUrl }) {
                 boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
               }}
             >
-              <div style={{ fontSize: "2rem", marginBottom: 12 }}>⚡</div>
+              <div style={{ color: "#2563eb", marginBottom: 14 }}><LightningIcon size={20} strokeWidth={1.65} /></div>
               <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#0f172a", margin: "0 0 8px 0" }}>
                 Automatic Silent Printing
               </h3>
@@ -279,7 +291,7 @@ export default function ShopkeeperPortal({ apiUrl }) {
                 boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
               }}
             >
-              <div style={{ fontSize: "2rem", marginBottom: 12 }}>📱</div>
+              <div style={{ color: "#2563eb", marginBottom: 14 }}><QrCodeIcon size={20} strokeWidth={1.65} /></div>
               <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#0f172a", margin: "0 0 8px 0" }}>
                 Printable Counter QR Code
               </h3>
@@ -298,7 +310,7 @@ export default function ShopkeeperPortal({ apiUrl }) {
                 boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
               }}
             >
-              <div style={{ fontSize: "2rem", marginBottom: 12 }}>💰</div>
+              <div style={{ color: "#2563eb", marginBottom: 14 }}><TagIcon size={20} strokeWidth={1.65} /></div>
               <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#0f172a", margin: "0 0 8px 0" }}>
                 100% Control Over Rates
               </h3>
@@ -317,7 +329,7 @@ export default function ShopkeeperPortal({ apiUrl }) {
                 boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
               }}
             >
-              <div style={{ fontSize: "2rem", marginBottom: 12 }}>🧾</div>
+              <div style={{ color: "#2563eb", marginBottom: 14 }}><ReceiptIcon size={20} strokeWidth={1.65} /></div>
               <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#0f172a", margin: "0 0 8px 0" }}>
                 Custom Slips & Shop Ads
               </h3>
@@ -336,7 +348,7 @@ export default function ShopkeeperPortal({ apiUrl }) {
                 boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
               }}
             >
-              <div style={{ fontSize: "2rem", marginBottom: 12 }}>📊</div>
+              <div style={{ color: "#2563eb", marginBottom: 14 }}><ChartIcon size={20} strokeWidth={1.65} /></div>
               <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#0f172a", margin: "0 0 8px 0" }}>
                 Live Queue & Revenue Metrics
               </h3>
@@ -355,7 +367,7 @@ export default function ShopkeeperPortal({ apiUrl }) {
                 boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
               }}
             >
-              <div style={{ fontSize: "2rem", marginBottom: 12 }}>🔒</div>
+              <div style={{ color: "#2563eb", marginBottom: 14 }}><ShieldCheckIcon size={20} strokeWidth={1.65} /></div>
               <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#0f172a", margin: "0 0 8px 0" }}>
                 Auto-Delete File Privacy
               </h3>

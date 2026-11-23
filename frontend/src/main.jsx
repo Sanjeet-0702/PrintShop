@@ -13,6 +13,19 @@ import TrackOrderModal from "./components/TrackOrderModal";
 import ConfirmedOrderView from "./components/ConfirmedOrderView";
 import ShopDashboard from "./components/ShopDashboard";
 import ShopkeeperPortal from "./components/ShopkeeperPortal";
+import {
+  DocumentIcon,
+  LightningIcon,
+  LockIcon,
+  NumberIcon,
+  MapPinIcon,
+  AlertTriangleIcon,
+  CheckIcon,
+  XIcon,
+  PauseIcon,
+  SparklesIcon,
+  LightbulbIcon,
+} from "./components/Icons";
 
 import "./styles.css";
 
@@ -101,6 +114,47 @@ const getSelectedPageCount = (totalPages, rangeStr, mode) => {
   const res = validatePageRange(totalPages, rangeStr, mode);
   return res.valid ? res.count : (Number(totalPages) || 1);
 };
+
+const STORAGE_KEY_ORDER = "printshop_active_order";
+
+function getStoredOrder() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_ORDER);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (_) {
+    return null;
+  }
+}
+
+function saveStoredOrder(order) {
+  try {
+    if (!order || !order.order_number) return;
+    const existing = getStoredOrder();
+    const code = order.pickup_code || existing?.pickup_code;
+    localStorage.setItem(STORAGE_KEY_ORDER, JSON.stringify({
+      order_number: order.order_number,
+      pickup_code: code,
+      created_at: order.created_at,
+    }));
+    const url = new URL(window.location.href);
+    url.searchParams.set("order", order.order_number);
+    if (code) {
+      url.searchParams.set("code", code);
+    }
+    window.history.replaceState({}, "", url.toString());
+  } catch (_) {}
+}
+
+function removeStoredOrder() {
+  try {
+    localStorage.removeItem(STORAGE_KEY_ORDER);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("order");
+    url.searchParams.delete("code");
+    window.history.replaceState({}, "", url.toString());
+  } catch (_) {}
+}
 
 function App() {
   // =====================================================
@@ -408,6 +462,64 @@ function App() {
   const [orderSubmitting, setOrderSubmitting] = useState(false);
   const [orderError, setOrderError] = useState("");
   const [placedOrder, setPlacedOrder] = useState(null);
+  const [activeSavedOrder, setActiveSavedOrder] = useState(null);
+
+  // Restore active order on page load / refresh from URL params or localStorage
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlOrderNum = params.get("order");
+    const urlCode = params.get("code");
+
+    let targetOrderNum = urlOrderNum;
+    let targetCode = urlCode;
+
+    if (!targetOrderNum || !targetCode) {
+      const stored = getStoredOrder();
+      if (stored?.order_number && stored?.pickup_code) {
+        targetOrderNum = stored.order_number;
+        targetCode = stored.pickup_code;
+      }
+    }
+
+    if (!targetOrderNum || !targetCode) return;
+
+    let cancelled = false;
+    const restoreOrder = async () => {
+      try {
+        const res = await fetch(
+          `${API_URL}/api/orders/${encodeURIComponent(targetOrderNum)}?pickup_code=${encodeURIComponent(targetCode)}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled && data.order) {
+            const restoredOrder = {
+              ...data.order,
+              pickup_code: data.order.pickup_code || targetCode,
+            };
+            setActiveSavedOrder(restoredOrder);
+            // If still pending or active, show confirmed screen
+            if (restoredOrder.order_status !== "COLLECTED") {
+              setPlacedOrder(restoredOrder);
+              saveStoredOrder(restoredOrder);
+            } else {
+              removeStoredOrder();
+            }
+          }
+        }
+      } catch (_) {
+        const stored = getStoredOrder();
+        if (!cancelled && stored) {
+          setPlacedOrder(stored);
+          setActiveSavedOrder(stored);
+        }
+      }
+    };
+
+    restoreOrder();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
@@ -533,6 +645,8 @@ function App() {
               createdOrder.payment_status = "PAID";
               createdOrder.order_status = "QUEUED";
               setPlacedOrder(createdOrder);
+              setActiveSavedOrder(createdOrder);
+              saveStoredOrder(createdOrder);
               setShowCheckoutModal(false);
               setOrderError("");
             } catch (verifyErr) {
@@ -544,7 +658,7 @@ function App() {
           modal: {
             ondismiss: () => {
               setOrderSubmitting(false);
-              setOrderError("⚠️ Payment was cancelled or not completed. Your order has NOT been placed. Please complete payment to place your order.");
+              setOrderError("Payment was cancelled or not completed. Your order has NOT been placed. Please complete payment to place your order.");
             },
           },
         });
@@ -552,7 +666,7 @@ function App() {
         rzp.on("payment.failed", (response) => {
           setOrderSubmitting(false);
           const reason = response?.error?.description || response?.error?.reason || "Transaction was declined.";
-          setOrderError(`❌ Payment failed: ${reason}. Your order has NOT been placed.`);
+          setOrderError(`Payment failed: ${reason}. Your order has NOT been placed.`);
         });
 
         rzp.open();
@@ -562,6 +676,8 @@ function App() {
 
       // Fallback for non-online payment methods
       setPlacedOrder(createdOrder);
+      setActiveSavedOrder(createdOrder);
+      saveStoredOrder(createdOrder);
       setShowCheckoutModal(false);
     } catch (err) {
       setOrderError(err.message || "Failed to create order. Please try again.");
@@ -618,12 +734,31 @@ function App() {
                 )}
               </div>
               <span className="ps-shop-tag">
-                {shop ? `📍 ${shop.name} • Store Pickup` : "📍 In-Store Self-Service Printing"}
+                {shop ? (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <MapPinIcon size={11} strokeWidth={1.6} /> {shop.name} • Store Pickup
+                  </span>
+                ) : (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <MapPinIcon size={11} strokeWidth={1.6} /> In-Store Self-Service Printing
+                  </span>
+                )}
               </span>
             </div>
           </div>
 
           <div className="ps-header-actions">
+            {activeSavedOrder && !placedOrder && (
+              <button
+                type="button"
+                onClick={() => setPlacedOrder(activeSavedOrder)}
+                className="ps-header-btn ps-active-order-pill"
+                title="Click to view your active order and pickup code"
+              >
+                <span className="ps-pulse-dot" />
+                <span>Active Order: <strong>{activeSavedOrder.order_number}</strong> (Code: <strong>{activeSavedOrder.pickup_code}</strong>)</span>
+              </button>
+            )}
             <button type="button" onClick={() => setShowTrackModal(true)} className="ps-header-btn ps-track-btn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="8" />
@@ -652,7 +787,7 @@ function App() {
         {/* Notice if shop in URL does not exist */}
         {SHOP_SLUG && shopError && (
           <div className="ps-customer-alert-closed">
-            <div className="ps-customer-alert-icon">⚠️</div>
+            <div className="ps-customer-alert-icon"><AlertTriangleIcon size={15} strokeWidth={1.65} /></div>
             <div className="ps-customer-alert-info">
               <strong>Print Store Not Found</strong>
               <p>No registered print store found for <code>?shop={SHOP_SLUG}</code>. Please check the counter link or register a new shop.</p>
@@ -668,7 +803,7 @@ function App() {
         {/* Closed / Away Warning Strip (Customer Side) */}
         {shop && shop.is_open === false && (
           <div className="ps-customer-alert-closed">
-            <div className="ps-customer-alert-icon">⏸️</div>
+            <div className="ps-customer-alert-icon"><PauseIcon size={15} strokeWidth={1.65} /></div>
             <div className="ps-customer-alert-info">
               <strong>Store is Currently AWAY / CLOSED</strong>
               <p>
@@ -676,8 +811,8 @@ function App() {
                 {shop.back_at && <span> (Expected back at: <strong>{shop.back_at}</strong>)</span>}
               </p>
             </div>
-            <div className="ps-customer-alert-badge">
-              ⏸️ Orders Paused
+            <div className="ps-customer-alert-badge" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+              <PauseIcon size={10} strokeWidth={1.65} /> Orders Paused
             </div>
           </div>
         )}
@@ -748,9 +883,15 @@ function App() {
                   </button>
 
                   <div className="ps-dropzone-features">
-                    <span className="ps-feat-pill">📄 PDF, DOCX, JPG, PNG</span>
-                    <span className="ps-feat-pill">⚡ Up to 50 MB / file</span>
-                    <span className="ps-feat-pill">🔒 Auto-deleted after printing</span>
+                    <span className="ps-feat-pill" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                      <DocumentIcon size={11} strokeWidth={1.6} /> PDF, DOCX, JPG, PNG
+                    </span>
+                    <span className="ps-feat-pill" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                      <LightningIcon size={11} strokeWidth={1.6} /> Up to 50 MB / file
+                    </span>
+                    <span className="ps-feat-pill" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                      <LockIcon size={11} strokeWidth={1.6} /> Auto-deleted after printing
+                    </span>
                   </div>
 
                   <input
@@ -805,7 +946,7 @@ function App() {
                               title="Remove file"
                               onClick={(e) => handleRemoveFile(item.id, e)}
                             >
-                              ✕
+                              <XIcon size={10} strokeWidth={1.75} />
                             </button>
 
                             <div className="ps-file-thumb-frame">
@@ -957,7 +1098,7 @@ function App() {
                                 className={`ps-choice-chip ${(!activeFile.page_selection_mode || activeFile.page_selection_mode === "all") ? "active" : ""}`}
                                 onClick={() => handlePageModeChange("all")}
                               >
-                                <span style={{ fontSize: "1.1rem" }}>📄</span>
+                                <span style={{ color: "var(--primary-blue)", display: "inline-flex" }}><DocumentIcon size={15} strokeWidth={1.65} /></span>
                                 <div className="ps-chip-text">
                                   <strong>All Pages</strong>
                                   <span>1 - {activeFile.pages}</span>
@@ -969,7 +1110,7 @@ function App() {
                                 className={`ps-choice-chip ${activeFile.page_selection_mode === "custom" ? "active" : ""}`}
                                 onClick={() => handlePageModeChange("custom")}
                               >
-                                <span style={{ fontSize: "1.1rem" }}>🔢</span>
+                                <span style={{ color: "var(--primary-blue)", display: "inline-flex" }}><NumberIcon size={15} strokeWidth={1.65} /></span>
                                 <div className="ps-chip-text">
                                   <strong>Custom Range</strong>
                                   <span>Select pages</span>
@@ -993,19 +1134,19 @@ function App() {
                                       autoFocus
                                     />
                                     {isInvalid ? (
-                                      <span className="ps-page-count-badge error" title={validation.error}>
-                                        ⚠️ Invalid
+                                      <span className="ps-page-count-badge error" title={validation.error} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                        <AlertTriangleIcon size={10} strokeWidth={1.65} /> Invalid
                                       </span>
                                     ) : (
-                                      <span className="ps-page-count-badge success">
-                                        ✓ {validation.count} {validation.count === 1 ? "page" : "pages"}
+                                      <span className="ps-page-count-badge success" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                        <CheckIcon size={10} strokeWidth={1.75} /> {validation.count} {validation.count === 1 ? "page" : "pages"}
                                       </span>
                                     )}
                                   </div>
 
                                   {isInvalid && (
-                                    <div className="ps-page-range-error-msg">
-                                      <span>⚠️</span> <span>{validation.error}</span>
+                                    <div className="ps-page-range-error-msg" style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                                      <AlertTriangleIcon size={11} strokeWidth={1.65} /> <span>{validation.error}</span>
                                     </div>
                                   )}
 
@@ -1040,8 +1181,8 @@ function App() {
                                     )}
                                   </div>
 
-                                  <p className="ps-page-hint">
-                                    💡 Type single page (e.g. <code>3</code>) or range (e.g. <code>1-2</code>). Allowed: <strong>1 to {activeFile.pages}</strong>.
+                                  <p className="ps-page-hint" style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                                    <LightbulbIcon size={12} style={{ color: "var(--warning-amber)" }} strokeWidth={1.6} /> Type single page (e.g. <code>3</code>) or range (e.g. <code>1-2</code>). Allowed: <strong>1 to {activeFile.pages}</strong>.
                                   </p>
                                 </div>
                               );
@@ -1132,8 +1273,8 @@ function App() {
                     </div>
 
                     {totalSaved > 0 && (
-                      <div className="ps-savings-banner">
-                        🎉 You save ₹{totalSaved} on this order!
+                      <div className="ps-savings-banner" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                        <SparklesIcon size={12} strokeWidth={1.6} /> You save ₹{totalSaved} on this order!
                       </div>
                     )}
 
@@ -1163,13 +1304,13 @@ function App() {
                           return;
                         }
                         if (shop && shop.is_open === false) {
-                          showToast(`⏸️ Store is currently closed: ${shop.status_message || "Orders paused"}`);
+                          showToast(`Store is currently closed: ${shop.status_message || "Orders paused"}`);
                           return;
                         }
                         if (hasInvalidPageRange) {
                           const invalidFile = fileCalculations.find((f) => f.rangeValidation && !f.rangeValidation.valid);
                           if (invalidFile) {
-                            showToast(`⚠️ ${invalidFile.rangeValidation.error}`);
+                            showToast(invalidFile.rangeValidation.error);
                             setActiveFileId(invalidFile.id);
                           }
                           return;
@@ -1178,23 +1319,25 @@ function App() {
                       }}
                     >
                       {shop?.is_open === false
-                        ? "⏸️ Store is Currently Closed"
+                        ? "Store is Currently Closed"
                         : hasInvalidPageRange
                         ? "Fix Invalid Page Range"
                         : "Proceed to Place Order"}
                     </button>
                     {shop?.is_open === false ? (
-                      <p style={{ color: "#c2410c", fontSize: "0.82rem", textAlign: "center", margin: "8px 0 0", fontWeight: "600" }}>
-                        ⏸️ {shop.status_message || "Store is closed. Online orders paused."}
+                      <p style={{ color: "#c2410c", fontSize: "0.82rem", textAlign: "center", margin: "8px 0 0", fontWeight: "600", display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
+                        <PauseIcon size={10} strokeWidth={1.65} /> {shop.status_message || "Store is closed. Online orders paused."}
                       </p>
                     ) : hasInvalidPageRange && (
-                      <p style={{ color: "#ef4444", fontSize: "0.8rem", textAlign: "center", margin: "6px 0 0", fontWeight: "600" }}>
-                        ⚠️ Please correct the invalid page range to proceed.
+                      <p style={{ color: "#ef4444", fontSize: "0.8rem", textAlign: "center", margin: "6px 0 0", fontWeight: "600", display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
+                        <AlertTriangleIcon size={11} strokeWidth={1.65} /> Please correct the invalid page range to proceed.
                       </p>
                     )}
 
                     <div className="ps-guarantee-note">
-                      <span>🔒 Files deleted permanently after printing</span>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                        <LockIcon size={10} strokeWidth={1.6} /> Files deleted permanently after printing
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1452,12 +1595,16 @@ function App() {
                 className="ps-modal-close"
                 onClick={() => setShowCheckoutModal(false)}
               >
-                ✕
+                <XIcon size={13} strokeWidth={1.75} />
               </button>
             </div>
 
             <form onSubmit={handlePlaceOrder} className="ps-modal-form">
-              {orderError && <div className="ps-form-error">{orderError}</div>}
+              {orderError && (
+                <div className="ps-form-error" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <AlertTriangleIcon size={12} style={{ flexShrink: 0 }} strokeWidth={1.65} /> <span>{orderError}</span>
+                </div>
+              )}
 
               <label className="ps-form-field">
                 <span>Full Name *</span>
@@ -1496,7 +1643,9 @@ function App() {
               <div className="ps-payment-method-section">
                 <span className="ps-field-title">Payment Method</span>
                 <div className="ps-online-pay-badge">
-                  <span className="ps-pay-secure-icon">🔒</span>
+                  <span className="ps-pay-secure-icon" style={{ display: "inline-flex", alignItems: "center" }}>
+                    <LockIcon size={12} strokeWidth={1.6} />
+                  </span>
                   <div className="ps-online-pay-info">
                     <strong>Online Payment (UPI, QR, Cards)</strong>
                     <small>Instant UPI (GPay, PhonePe, Paytm), Cards & NetBanking</small>

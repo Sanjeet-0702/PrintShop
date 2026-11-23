@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { CheckIcon, StarIcon } from "./Icons";
 
 // The stages a customer sees, in order.
 const STEPS = [
@@ -211,7 +212,11 @@ export default function OrderStatus({
                         : "#cbd5e1",
                     }}
                   >
-                    {done || (active && status === "COLLECTED") ? "✓" : index + 1}
+                    {done || (active && status === "COLLECTED") ? (
+                      <CheckIcon size={10} strokeWidth={1.75} />
+                    ) : (
+                      index + 1
+                    )}
                   </span>
 
                   {step.label}
@@ -289,7 +294,7 @@ export default function OrderStatus({
                 }}
               >
                 Thank you for your feedback
-                {order.rating ? ` (${"★".repeat(order.rating)})` : ""}! See you
+                {order.rating ? ` (${order.rating}/5 stars)` : ""}! See you
                 again.
               </div>
             ) : (
@@ -306,7 +311,7 @@ export default function OrderStatus({
                   How was your experience?
                 </div>
 
-                <div style={{ display: "flex", gap: "4px", marginBottom: "8px" }}>
+                <div style={{ display: "flex", gap: "6px", marginBottom: "8px", alignItems: "center" }}>
                   {[1, 2, 3, 4, 5].map((value) => (
                     <button
                       key={value}
@@ -316,13 +321,16 @@ export default function OrderStatus({
                       style={{
                         background: "none",
                         border: "none",
-                        fontSize: "30px",
-                        lineHeight: 1,
+                        padding: "2px",
                         cursor: "pointer",
-                        color: value <= rating ? "#f59e0b" : "#cbd5e1",
+                        display: "inline-flex",
+                        alignItems: "center",
                       }}
                     >
-                      ★
+                      <StarIcon size={18} strokeWidth={1.5}
+                        color={value <= rating ? "#f59e0b" : "#cbd5e1"}
+                        style={{ fill: value <= rating ? "#f59e0b" : "none" }}
+                      />
                     </button>
                   ))}
                 </div>
