@@ -888,6 +888,65 @@ export default function ShopDashboard({ apiUrl }) {
     }
   };
 
+  const handlePrintDocument = async (order) => {
+    const key = order.id != null ? String(order.id) : order.order_number;
+    setBusy(key);
+    setRowMessage((prev) => ({ ...prev, [key]: "" }));
+
+    const storedFilename =
+      order.stored_filename || (order.items && order.items[0]?.stored_filename);
+    const fileUrl = storedFilename
+      ? `${apiUrl}/api/files/${encodeURIComponent(storedFilename)}/view`
+      : null;
+
+    if (fileUrl) {
+      try {
+        const response = await fetch(fileUrl, {
+          headers: tokenRef.current ? { Authorization: `Bearer ${tokenRef.current}` } : {},
+        });
+        if (response.ok) {
+          const blob = await response.blob();
+          const blobUrl = URL.createObjectURL(blob);
+
+          let iframe = document.getElementById("ps-native-print-frame");
+          if (!iframe) {
+            iframe = document.createElement("iframe");
+            iframe.id = "ps-native-print-frame";
+            iframe.style.position = "fixed";
+            iframe.style.right = "0";
+            iframe.style.bottom = "0";
+            iframe.style.width = "0";
+            iframe.style.height = "0";
+            iframe.style.border = "none";
+            document.body.appendChild(iframe);
+          }
+          iframe.src = blobUrl;
+          iframe.onload = () => {
+            setTimeout(() => {
+              try {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+              } catch {
+                window.open(blobUrl, "_blank");
+              }
+            }, 300);
+          };
+        } else {
+          window.open(fileUrl, "_blank");
+        }
+      } catch (e) {
+        console.error("Print blob error:", e);
+        if (fileUrl) window.open(fileUrl, "_blank");
+      }
+    }
+
+    try {
+      await act(key, "print");
+    } catch (err) {
+      console.warn("Backend print status sync warning:", err);
+    }
+  };
+
   const copyCustomerLink = () => {
     const activeSlug = data?.shop?.slug || data?.shop_slug || slug;
     const link = `${window.location.origin}/?shop=${encodeURIComponent(activeSlug)}`;
@@ -1778,6 +1837,28 @@ export default function ShopDashboard({ apiUrl }) {
                           </button>
                         )}
 
+                        {/* Direct Customer PDF Link */}
+                        {(order.stored_filename || (order.items && order.items[0]?.stored_filename)) && (
+                          <div style={{ marginBottom: 8, textAlign: "center" }}>
+                            <a
+                              href={`${apiUrl}/api/files/${encodeURIComponent(order.stored_filename || order.items[0].stored_filename)}/view`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 4,
+                                fontSize: "0.78rem",
+                                color: "#2563eb",
+                                textDecoration: "none",
+                                fontWeight: 600,
+                              }}
+                            >
+                              <DocumentIcon size={12} strokeWidth={1.8} /> View / Download PDF ↗
+                            </a>
+                          </div>
+                        )}
+
                         {status === "QUEUED" && (
                           <button
                             type="button"
@@ -1794,9 +1875,9 @@ export default function ShopDashboard({ apiUrl }) {
                               gap: 5,
                             }}
                             disabled={isBusy}
-                            onClick={() => act(orderKey, "print")}
+                            onClick={() => handlePrintDocument(order)}
                           >
-                            {isBusy ? "Sending to printer..." : (
+                            {isBusy ? "Opening printer..." : (
                               <>
                                 <PrinterIcon size={13} strokeWidth={1.8} /> Print Document
                               </>
@@ -1925,13 +2006,15 @@ export default function ShopDashboard({ apiUrl }) {
                             </p>
                           </div>
                         ) : realPrinters.length === 0 ? (
-                          <div className="ps-printer-empty-box">
-                            <div className="ps-printer-empty-icon">
-                              <PrinterIcon size={20} strokeWidth={1.6} />
+                          <div className="ps-printer-empty-box" style={{ padding: "18px 16px", textAlign: "center" }}>
+                            <div className="ps-printer-empty-icon" style={{ background: "#eff6ff", color: "#2563eb", marginBottom: 8 }}>
+                              <PrinterIcon size={22} strokeWidth={1.8} />
                             </div>
-                            <p className="ps-printer-empty-text-main">No Physical Hardware Printers Detected</p>
-                            <p className="ps-printer-empty-text-sub">
-                              Please plug in your printer's USB cable or connect the printer to your local Wi-Fi network. Then click "Refresh Devices".
+                            <p className="ps-printer-empty-text-main" style={{ color: "#1e293b", fontWeight: 700, marginBottom: 4 }}>
+                              Browser &amp; Counter Direct Printing
+                            </p>
+                            <p className="ps-printer-empty-text-sub" style={{ maxWidth: 440, margin: "0 auto", color: "#64748b", fontSize: "0.82rem", lineHeight: 1.5 }}>
+                              Your dashboard is running in the cloud. When you click <strong>"Print Document"</strong> on any order, your computer immediately opens your connected counter printer (e.g. <strong>HP LaserJet</strong>) via the browser print dialog. No background services or tunnels required!
                             </p>
                           </div>
                         ) : (

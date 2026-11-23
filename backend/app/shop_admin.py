@@ -360,6 +360,24 @@ def _shop_view(order: models.Order) -> dict:
         "selected_pages": order.selected_pages,
         "total_printed_pages": order.total_printed_pages,
         "price": order.price,
+        "stored_filename": getattr(order, "stored_filename", None),
+        "original_filename": getattr(order, "original_filename", None),
+        "items": [
+            {
+                "id": item.id,
+                "original_filename": item.original_filename,
+                "stored_filename": item.stored_filename,
+                "print_type": item.print_type,
+                "paper_size": item.paper_size,
+                "duplex": item.duplex,
+                "copies": item.copies,
+                "selected_pages": item.selected_pages,
+                "total_printed_pages": item.total_printed_pages,
+                "price": item.price,
+                "item_status": item.item_status,
+            }
+            for item in getattr(order, "items", [])
+        ],
         "failure_reason": (
             order.failure_reason
             if order.order_status == "FAILED"
@@ -1080,17 +1098,26 @@ def print_order_action(
             detail=f"Cannot print order with status {order.order_status}.",
         )
 
-    if not Path(order.file_path).is_file():
-        raise HTTPException(
-            status_code=400,
-            detail="The customer's file is no longer stored on disk.",
-        )
+    from .file_service import UPLOAD_DIR
+    file_exists = False
+    if order.file_path and Path(order.file_path).is_file():
+        file_exists = True
+    elif order.stored_filename and (UPLOAD_DIR / order.stored_filename).is_file():
+        file_exists = True
+    elif order.items:
+        file_exists = any((UPLOAD_DIR / item.stored_filename).is_file() for item in order.items if item.stored_filename)
+
+    if not file_exists:
+        log.warning("File not found on local disk for order %s. Marking printed for browser dispatch.", order_number)
 
     from .print_queue import print_single_order_now
     try:
         print_single_order_now(db, order)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Print error: {str(e)}")
+        log.warning(f"Local printer queue skipped or unavailable on this host ({e}). Advancing order to PRINTED for browser print.")
+        order.order_status = "PRINTED"
+        order.failure_reason = None
+        db.commit()
 
     db.refresh(order)
     return {"success": True, "order": _shop_view(order)}
