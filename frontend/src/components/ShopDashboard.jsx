@@ -888,63 +888,20 @@ export default function ShopDashboard({ apiUrl }) {
     }
   };
 
-  const handlePrintDocument = async (order) => {
-    const key = order.id != null ? String(order.id) : order.order_number;
-    setBusy(key);
-    setRowMessage((prev) => ({ ...prev, [key]: "" }));
+  const handlePrintDocument = (order) => {
+    const orderNum = order.order_number;
+    const printUrl = `${apiUrl}/api/orders/${encodeURIComponent(orderNum)}/print-preview`;
 
-    const storedFilename =
-      order.stored_filename || (order.items && order.items[0]?.stored_filename);
-    const fileUrl = storedFilename
-      ? `${apiUrl}/api/files/${encodeURIComponent(storedFilename)}/view`
-      : null;
-
-    if (fileUrl) {
-      try {
-        const response = await fetch(fileUrl, {
-          headers: tokenRef.current ? { Authorization: `Bearer ${tokenRef.current}` } : {},
-        });
-        if (response.ok) {
-          const blob = await response.blob();
-          const blobUrl = URL.createObjectURL(blob);
-
-          let iframe = document.getElementById("ps-native-print-frame");
-          if (!iframe) {
-            iframe = document.createElement("iframe");
-            iframe.id = "ps-native-print-frame";
-            iframe.style.position = "fixed";
-            iframe.style.right = "0";
-            iframe.style.bottom = "0";
-            iframe.style.width = "0";
-            iframe.style.height = "0";
-            iframe.style.border = "none";
-            document.body.appendChild(iframe);
-          }
-          iframe.src = blobUrl;
-          iframe.onload = () => {
-            setTimeout(() => {
-              try {
-                iframe.contentWindow.focus();
-                iframe.contentWindow.print();
-              } catch {
-                window.open(blobUrl, "_blank");
-              }
-            }, 300);
-          };
-        } else {
-          window.open(fileUrl, "_blank");
-        }
-      } catch (e) {
-        console.error("Print blob error:", e);
-        if (fileUrl) window.open(fileUrl, "_blank");
-      }
+    // SYNCHRONOUS window.open so Chrome/Edge NEVER blocks the tab popup!
+    const win = window.open(printUrl, "_blank");
+    if (!win) {
+      window.location.href = printUrl;
+      return;
     }
 
-    try {
-      await act(key, "print");
-    } catch (err) {
-      console.warn("Backend print status sync warning:", err);
-    }
+    // Advance backend queue status to PRINTED
+    const key = order.id != null ? String(order.id) : orderNum;
+    act(key, "print");
   };
 
   const copyCustomerLink = () => {
@@ -1781,15 +1738,60 @@ export default function ShopDashboard({ apiUrl }) {
 
                       {/* Action Controls for this Order */}
                       <div className="ps-order-action-footer">
-                        {status === "PRINTED" && (
-                          <button
-                            type="button"
-                            className="ps-btn-verify-ready"
-                            disabled={isBusy}
-                            onClick={() => act(orderKey, "ready")}
+                        {/* Direct Print Preview Tab Link */}
+                        <div style={{ marginBottom: 8, textAlign: "center" }}>
+                          <a
+                            href={`${apiUrl}/api/orders/${encodeURIComponent(order.order_number)}/print-preview`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 4,
+                              fontSize: "0.78rem",
+                              color: "#2563eb",
+                              textDecoration: "none",
+                              fontWeight: 600,
+                            }}
                           >
-                            {isBusy ? "Updating..." : <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><CheckIcon size={11} strokeWidth={1.75} /> Verified, Ready for Pickup</span>}
-                          </button>
+                            <DocumentIcon size={12} strokeWidth={1.8} /> Open Print Preview ↗
+                          </a>
+                        </div>
+
+                        {status === "PRINTED" && (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 6, width: "100%" }}>
+                            <button
+                              type="button"
+                              style={{
+                                width: "100%",
+                                padding: "7px 10px",
+                                fontSize: "0.80rem",
+                                fontWeight: 600,
+                                borderRadius: "var(--radius-sm)",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: 6,
+                                background: "#f1f5f9",
+                                border: "1px solid #cbd5e1",
+                                color: "#1e293b",
+                                cursor: "pointer",
+                              }}
+                              disabled={isBusy}
+                              onClick={() => handlePrintDocument(order)}
+                            >
+                              <PrinterIcon size={13} strokeWidth={1.8} /> Re-Print Document ↗
+                            </button>
+
+                            <button
+                              type="button"
+                              className="ps-btn-verify-ready"
+                              disabled={isBusy}
+                              onClick={() => act(orderKey, "ready")}
+                            >
+                              {isBusy ? "Updating..." : <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><CheckIcon size={11} strokeWidth={1.75} /> Verified, Ready for Pickup</span>}
+                            </button>
+                          </div>
                         )}
 
                         {status === "READY" && (
@@ -1835,28 +1837,6 @@ export default function ShopDashboard({ apiUrl }) {
                           >
                             {isBusy ? "Retrying..." : <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><RefreshIcon size={13} strokeWidth={1.8} /> Retry Print</span>}
                           </button>
-                        )}
-
-                        {/* Direct Customer PDF Link */}
-                        {(order.stored_filename || (order.items && order.items[0]?.stored_filename)) && (
-                          <div style={{ marginBottom: 8, textAlign: "center" }}>
-                            <a
-                              href={`${apiUrl}/api/files/${encodeURIComponent(order.stored_filename || order.items[0].stored_filename)}/view`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 4,
-                                fontSize: "0.78rem",
-                                color: "#2563eb",
-                                textDecoration: "none",
-                                fontWeight: 600,
-                              }}
-                            >
-                              <DocumentIcon size={12} strokeWidth={1.8} /> View / Download PDF ↗
-                            </a>
-                          </div>
                         )}
 
                         {status === "QUEUED" && (

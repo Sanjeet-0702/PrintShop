@@ -919,6 +919,202 @@ def view_document_raw(stored_filename: str):
         raise HTTPException(status_code=404, detail=str(error))
 
 
+@app.get("/api/orders/{order_number}/document")
+@app.get("/api/orders/{order_number}/view")
+@app.get("/api/shop-admin/orders/{order_number}/document")
+def get_order_document_stream(
+    order_number: str,
+    db: Session = Depends(get_db),
+):
+    from .file_service import UPLOAD_DIR
+    from fastapi.responses import FileResponse
+
+    order = db.query(models.Order).filter(models.Order.order_number == order_number).first()
+    if not order and str(order_number).isdigit():
+        order = db.query(models.Order).filter(models.Order.id == int(order_number)).first()
+
+    if not order:
+        raise HTTPException(status_code=404, detail=f"Order {order_number} not found.")
+
+    target_path = None
+    if order.file_path and Path(order.file_path).is_file():
+        target_path = Path(order.file_path)
+    elif order.stored_filename and (UPLOAD_DIR / order.stored_filename).is_file():
+        target_path = UPLOAD_DIR / order.stored_filename
+    elif getattr(order, "items", None):
+        for item in order.items:
+            if item.file_path and Path(item.file_path).is_file():
+                target_path = Path(item.file_path)
+                break
+            elif item.stored_filename and (UPLOAD_DIR / item.stored_filename).is_file():
+                target_path = UPLOAD_DIR / item.stored_filename
+                break
+
+    if not target_path or not target_path.is_file():
+        raise HTTPException(status_code=404, detail="Order document file was not found on disk.")
+
+    media_type = "application/pdf" if target_path.suffix.lower() == ".pdf" else "image/png"
+    return FileResponse(
+        target_path,
+        media_type=media_type,
+        headers={"Content-Disposition": f"inline; filename=\"{order.order_number}_{target_path.name}\""}
+    )
+
+
+@app.get("/api/orders/{order_number}/print-preview")
+@app.get("/api/shop-admin/orders/{order_number}/print-preview")
+def get_order_print_preview_html(
+    order_number: str,
+    db: Session = Depends(get_db),
+):
+    from fastapi.responses import HTMLResponse
+    order = db.query(models.Order).filter(models.Order.order_number == order_number).first()
+    if not order and str(order_number).isdigit():
+        order = db.query(models.Order).filter(models.Order.id == int(order_number)).first()
+
+    if not order:
+        raise HTTPException(status_code=404, detail=f"Order {order_number} not found.")
+
+    pdf_url = f"/api/orders/{order.order_number}/document"
+    color_type = "Colour Print" if getattr(order, "print_type", "") == "color" else "Black & White (B&W)"
+    duplex_mode = "Double-sided" if getattr(order, "duplex", "") == "two_sided" else "Single-sided"
+    total_pages = getattr(order, "total_printed_pages", 1)
+    copies = getattr(order, "copies", 1)
+    paper_size = getattr(order, "paper_size", "A4") or "A4"
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Print Order #{order.order_number} - PrintShop</title>
+  <style>
+    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+    body {{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }}
+    .top-bar {{
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }}
+    .order-info {{
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }}
+    .order-badge {{
+      background: #2563eb;
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }}
+    .specs {{
+      color: #cbd5e1;
+      font-size: 13px;
+      font-weight: 500;
+    }}
+    .specs strong {{ color: #38bdf8; }}
+    .btn-group {{
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }}
+    .btn-print {{
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+      transition: all 0.2s;
+    }}
+    .btn-print:hover {{
+      background: #059669;
+      transform: translateY(-1px);
+    }}
+    .btn-close {{
+      background: #334155;
+      color: #cbd5e1;
+      border: none;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+    }}
+    .btn-close:hover {{ background: #475569; color: white; }}
+    .pdf-container {{
+      flex: 1;
+      width: 100%;
+      height: calc(100vh - 58px);
+      background: #475569;
+    }}
+    iframe {{
+      width: 100%;
+      height: 100%;
+      border: none;
+    }}
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <div class="order-info">
+      <span class="order-badge">Order #{order.order_number}</span>
+      <span class="specs">
+        <strong>{color_type}</strong> • {paper_size} • {duplex_mode} • 
+        <strong>{total_pages} Pages</strong> ({copies} {'copy' if copies == 1 else 'copies'})
+      </span>
+    </div>
+    <div class="btn-group">
+      <button class="btn-print" onclick="doPrint()">
+        🖨️ Print to HP LaserJet (Ctrl + P)
+      </button>
+      <button class="btn-close" onclick="window.close()">Close Tab</button>
+    </div>
+  </div>
+  <div class="pdf-container">
+    <iframe id="pdfFrame" src="{pdf_url}" title="Document Preview"></iframe>
+  </div>
+  <script>
+    function doPrint() {{
+      const frame = document.getElementById('pdfFrame');
+      try {{
+        frame.contentWindow.focus();
+        frame.contentWindow.print();
+      }} catch (err) {{
+        window.print();
+      }}
+    }}
+    window.addEventListener('load', () => {{
+      setTimeout(() => {{
+        doPrint();
+      }}, 1200);
+    }});
+  </script>
+</body>
+</html>"""
+    return HTMLResponse(content=html)
+
+
 # =========================================================
 # CREATE PRINTSHOP ORDER
 # =========================================================
