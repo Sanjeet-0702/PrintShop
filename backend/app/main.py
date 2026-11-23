@@ -246,15 +246,24 @@ Base.metadata.create_all(
 # CORS
 # =========================================================
 
+cors_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    settings.frontend_url,
+]
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "")
+if allowed_origins_env:
+    for origin in allowed_origins_env.split(","):
+        orig = origin.strip()
+        if orig and orig not in cors_origins:
+            cors_origins.append(orig)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-        settings.frontend_url,
-    ],
+    allow_origins=cors_origins,
+    allow_origin_regex=r"^https:\/\/.*\.vercel\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

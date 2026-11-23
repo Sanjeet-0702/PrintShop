@@ -29,7 +29,7 @@ import {
 
 import "./styles.css";
 
-const API_URL = "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 // Shop slug from URL: e.g. http://localhost:5173/?shop=campus-xerox
 const SHOP_SLUG =

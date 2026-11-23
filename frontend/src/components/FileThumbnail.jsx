@@ -4,7 +4,7 @@ export default function FileThumbnail({
   file,
   fileType,
   storedFilename,
-  apiUrl = "http://127.0.0.1:8000",
+  apiUrl = (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"),
   width = 110,
   height = 140,
   className = "",
